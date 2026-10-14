@@ -37,6 +37,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "847a6be6-4eba-42ac-85ef-a2da0bc4fb98"
+      }
+    },
+    "owner": "bilalkhandevs-team"
   }
 }
