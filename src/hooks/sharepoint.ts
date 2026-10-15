@@ -41,6 +41,7 @@ export async function getSurveyItems(token: string) {
       ...data.value.map((i: any) => ({
         id: i.id,
         _by: i.createdBy?.user?.displayName ?? "",
+        _created: i.createdDateTime ?? "",
         ...i.fields,
       })),
     );
