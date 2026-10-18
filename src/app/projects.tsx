@@ -183,6 +183,28 @@ export default function Projects() {
   const [items, setItems] = useState<any[]>(getCache() ?? []);
   const [loading, setLoading] = useState(false);
 
+  const chipsRef = useRef<ScrollView>(null);
+  const chipX = useRef<Record<string, number>>({});
+
+  useEffect(() => {
+    const p = params.performance;
+    if (p && (FILTERS as readonly string[]).includes(p)) {
+      setFilter(p as Filter);
+    }
+  }, [params.performance]);
+
+  useEffect(() => {
+    if (params.site) setQuery(params.site);
+  }, [params.site]);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const x = chipX.current[filter] ?? 0;
+      chipsRef.current?.scrollTo({ x: Math.max(0, x - 20), animated: true });
+    }, 150);
+    return () => clearTimeout(t);
+  }, [filter]);
+
   const load = useCallback(async () => {
     if (!accessToken) return;
     setLoading(true);
@@ -265,6 +287,7 @@ export default function Projects() {
         </View>
 
         <ScrollView
+          ref={chipsRef}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ gap: 8, paddingRight: 4 }}
@@ -276,6 +299,9 @@ export default function Projects() {
               <Pressable
                 key={f}
                 onPress={() => setFilter(f)}
+                onLayout={(e) => {
+                  chipX.current[f] = e.nativeEvent.layout.x;
+                }}
                 style={[s.chip, on && s.chipOn]}
               >
                 {f !== "All" && (

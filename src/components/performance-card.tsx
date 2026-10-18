@@ -28,6 +28,28 @@ const CIRC = 2 * Math.PI * R;
 const GAP = 3;
 const HUB = 76;
 
+function statusAt(x: number, y: number, data: Item[]): string | null {
+  const dx = x - SIZE / 2;
+  const dy = y - SIZE / 2;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+
+  // sirf ring ke upar tap hone par (hub ya bahar nahi)
+  if (dist < R - STROKE / 2 - 6 || dist > R + STROKE / 2 + 8) return null;
+
+  // 12 baje se clockwise angle, 0..100
+  let deg = (Math.atan2(dy, dx) * 180) / Math.PI + 90;
+  if (deg < 0) deg += 360;
+  const pct = (deg / 360) * 100;
+
+  let acc = 0;
+  for (const d of data) {
+    if (d.count <= 0) continue;
+    acc += d.count;
+    if (pct <= acc) return d.status;
+  }
+  return null;
+}
+
 export function PerformanceCard({
   data,
   total,
@@ -123,7 +145,6 @@ export function PerformanceCard({
                   rotation={-90 + (g.start / CIRC) * 360}
                   originX={SIZE / 2}
                   originY={SIZE / 2}
-                  onPress={() => onSelect(g.status)}
                 />
               );
             })}
@@ -133,6 +154,15 @@ export function PerformanceCard({
             <Text style={s.hubNum}>{total}</Text>
             <Text style={s.hubLabel}>SITES</Text>
           </View>
+
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={(e) => {
+              const { locationX, locationY } = e.nativeEvent;
+              const st = statusAt(locationX, locationY, data);
+              if (st) onSelect(st);
+            }}
+          />
         </View>
 
         <View style={s.legend}>
