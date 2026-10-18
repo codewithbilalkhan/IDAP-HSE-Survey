@@ -1,13 +1,17 @@
 import { AppHeader } from "@/components/app-header";
 import { KpiGrid } from "@/components/kpi-grid";
+import { LoadingOverlay } from "@/components/loading-overlay";
 import { PerformanceCard } from "@/components/performance-card";
 import { SideDrawer } from "@/components/side-drawer";
+import { StaggerIn } from "@/components/stagger-in";
+import { TopSites } from "@/components/top-sites";
 import { FIELDS, getField } from "@/constants/fields";
 import { C } from "@/constants/theme";
 import { getSurveyItems } from "@/hooks/sharepoint";
 import { useMicrosoftAuth } from "@/hooks/useMicrosoftAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { computeKpis } from "@/lib/hse-kpis";
+import { getCache, setCache } from "@/lib/survey-cache";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -64,6 +68,7 @@ export default function Index() {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [firstLoaded, setFirstLoaded] = useState(false);
 
   const openMenu = useCallback(() => setMenuOpen(true), []);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
@@ -92,19 +97,29 @@ export default function Index() {
     setLoading(true);
     setError("");
     try {
-      setItems(await getSurveyItems(accessToken));
+      const data = await getSurveyItems(accessToken);
+      setCache(data);
+      setItems(data);
     } catch (e: any) {
       setError(e.message);
     } finally {
       setLoading(false);
+      setFirstLoaded(true);
     }
   }, [accessToken]);
 
   useEffect(() => {
-    if (accessToken) load();
+    if (!accessToken) return;
+    const cached = getCache();
+    if (cached) {
+      setItems(cached);
+      setFirstLoaded(true);
+    } else {
+      load();
+    }
   }, [accessToken, load]);
 
-  const { sites, respondents, today, poor, breakdown } = useMemo(
+  const { sites, respondents, today, poor, breakdown, top } = useMemo(
     () => computeKpis(items, (i) => getField(i, FIELDS.projectSite)),
     [items],
   );
@@ -205,37 +220,53 @@ export default function Index() {
         <AppHeader profile={profile} onMenuPress={openMenu} />
 
         <View style={s.body}>
-          <KpiGrid
-            sites={sites}
-            respondents={respondents}
-            today={today}
-            poor={poor}
-            onSites={() => router.push("/projects" as any)}
-            onRespondents={() => router.push("/team" as any)}
-            onToday={() =>
-              router.push({
-                pathname: "/projects",
-                params: { filter: "today" },
-              } as any)
-            }
-            onPoor={() =>
-              router.push({
-                pathname: "/projects",
-                params: { performance: "Poor" },
-              } as any)
-            }
-          />
+          <StaggerIn index={0} play={firstLoaded}>
+            <KpiGrid
+              sites={sites}
+              respondents={respondents}
+              today={today}
+              poor={poor}
+              onSites={() => router.push("/projects" as any)}
+              onRespondents={() => router.push("/team" as any)}
+              onToday={() =>
+                router.push({
+                  pathname: "/projects",
+                  params: { filter: "today" },
+                } as any)
+              }
+              onPoor={() =>
+                router.push({
+                  pathname: "/projects",
+                  params: { performance: "Poor" },
+                } as any)
+              }
+            />
+          </StaggerIn>
+
           {!!error && <Text style={s.error}>{error}</Text>}
-          <PerformanceCard
-            data={breakdown}
-            total={sites}
-            onSelect={(status) =>
-              router.push({
-                pathname: "/projects",
-                params: { performance: status },
-              } as any)
-            }
-          />
+
+          <StaggerIn index={1} play={firstLoaded}>
+            <PerformanceCard
+              data={breakdown}
+              total={sites}
+              onSelect={(status) =>
+                router.push({
+                  pathname: "/projects",
+                  params: { performance: status },
+                } as any)
+              }
+            />
+          </StaggerIn>
+
+          <StaggerIn index={2} play={firstLoaded}>
+            <TopSites
+              data={top.slice(0, 5)}
+              onViewAll={() => router.push("/projects" as any)}
+              onSelect={(site) =>
+                router.push({ pathname: "/projects", params: { site } } as any)
+              }
+            />
+          </StaggerIn>
         </View>
       </ScrollView>
 
@@ -245,6 +276,7 @@ export default function Index() {
         profile={profile}
         onSignOut={signOut}
       />
+      <LoadingOverlay visible={!firstLoaded} />
     </View>
   );
 }

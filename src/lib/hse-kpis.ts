@@ -120,6 +120,11 @@ export function computeKpis(items: any[], siteOf: (i: any) => string) {
     if (isToday(created)) today++;
   }
 
+  const top = Array.from(siteTotals.entries())
+    .map(([site, v]) => ({ site, avg: v.sum / v.n, surveys: v.n }))
+    .filter((t) => t.avg > 0)
+    .sort((a, b) => b.avg - a.avg);
+
   let poor = 0;
   siteTotals.forEach((v) => {
     if (v.sum / v.n <= 2.5) poor++;
@@ -152,5 +157,6 @@ export function computeKpis(items: any[], siteOf: (i: any) => string) {
     today,
     poor,
     breakdown,
+    top,
   };
 }

@@ -1,15 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Easing,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  Animated,
+  Easing,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 import { C, shadow } from "@/constants/theme";
+const ICON = "#EC991B";
+const ICON_BG = "#FDF2E0";
 
 function CountUp({ value, style }: { value: number; style: any }) {
   const anim = useRef(new Animated.Value(0)).current;
@@ -35,15 +37,12 @@ type IconName = React.ComponentProps<typeof Ionicons>["name"];
 function Tile({
   label,
   value,
-  accent,
-  tint,
   icon,
+
   onPress,
 }: {
   label: string;
   value: number;
-  accent: string;
-  tint: string;
   icon: IconName;
   onPress: () => void;
 }) {
@@ -55,8 +54,8 @@ function Tile({
         pressed && { transform: [{ scale: 0.96 }] },
       ]}
     >
-      <View style={[s.iconBox, { backgroundColor: tint }]}>
-        <Ionicons name={icon} size={18} color={accent} />
+      <View style={[s.iconBox, { backgroundColor: ICON_BG }]}>
+        <Ionicons name={icon} size={18} color={ICON} />
       </View>
       <CountUp value={value} style={s.num} />
       <Text style={s.label} numberOfLines={1}>
@@ -84,32 +83,24 @@ export function KpiGrid(p: Props) {
         label="Total Sites"
         value={p.sites}
         icon="business-outline"
-        accent={C.orange}
-        tint={C.orangeSoft}
         onPress={p.onSites}
       />
       <Tile
         label="Surveyors"
         value={p.respondents}
         icon="people"
-        accent={C.gray}
-        tint="#F0EEEC"
         onPress={p.onRespondents}
       />
       <Tile
         label="Today"
         value={p.today}
         icon="calendar-outline"
-        accent={C.orange}
-        tint={C.orangeSoft}
         onPress={p.onToday}
       />
       <Tile
         label="Poor Sites"
         value={p.poor}
         icon="alert-circle"
-        accent={C.red}
-        tint={C.redSoft}
         onPress={p.onPoor}
       />
     </View>
