@@ -361,9 +361,12 @@ export default function Projects() {
             <FadeIn index={index}>
               <SiteRow
                 item={item}
-                onPress={() => {
-                  // site detail screen agla step hai
-                }}
+                onPress={() =>
+                  router.push({
+                    pathname: "/site",
+                    params: { site: item.site },
+                  } as any)
+                }
               />
             </FadeIn>
           </View>

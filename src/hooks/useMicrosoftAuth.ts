@@ -15,6 +15,7 @@ const issuer = `https://login.microsoftonline.com/${AZURE.tenantId}/v2.0`;
 // shared state (screens badalne par bhi bacha rehta hai)
 let token: string | null = null;
 let pendingVerifier: string | null = null;
+let refresh: string | null = null;
 const listeners = new Set<(t: string | null) => void>();
 
 function setToken(t: string | null) {
@@ -23,6 +24,7 @@ function setToken(t: string | null) {
 }
 
 export function signOut() {
+  refresh = null;
   setToken(null);
 }
 
@@ -38,6 +40,7 @@ export async function completeSignIn(code: string) {
     },
     discovery,
   );
+  refresh = tokens.refreshToken ?? null;
   setToken(tokens.accessToken);
 }
 
@@ -66,4 +69,20 @@ export function useMicrosoftAuth() {
   };
 
   return { accessToken, signIn, signOut, ready: !!discovery };
+}
+
+export async function getSharePointToken(): Promise<string> {
+  console.log("REFRESH?", !!refresh);
+  if (!refresh) throw new Error("Please sign in again");
+  const discovery = await AuthSession.fetchDiscoveryAsync(issuer);
+  const t = await AuthSession.refreshAsync(
+    {
+      clientId: AZURE.clientId,
+      refreshToken: refresh,
+      scopes: [`https://${AZURE.sharepointHost}/AllSites.Read`],
+    },
+    discovery,
+  );
+  if (t.refreshToken) refresh = t.refreshToken;
+  return t.accessToken;
 }

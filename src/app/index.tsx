@@ -263,7 +263,7 @@ export default function Index() {
               data={top.slice(0, 5)}
               onViewAll={() => router.push("/projects" as any)}
               onSelect={(site) =>
-                router.push({ pathname: "/projects", params: { site } } as any)
+                router.push({ pathname: "/site", params: { site } } as any)
               }
             />
           </StaggerIn>

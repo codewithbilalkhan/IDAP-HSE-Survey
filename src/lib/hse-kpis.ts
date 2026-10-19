@@ -160,3 +160,93 @@ export function computeKpis(items: any[], siteOf: (i: any) => string) {
     top,
   };
 }
+
+export const CATEGORY_META = [
+  { name: "Waste Mgmt / Housekeeping", icon: "trash-outline" },
+  {
+    name: "Personal Protection Equipment (PPE)",
+    icon: "shield-checkmark-outline",
+  },
+  { name: "Excavation", icon: "construct-outline" },
+  { name: "Working at Height", icon: "arrow-up-circle-outline" },
+  { name: "Scaffold & Ladders", icon: "git-network-outline" },
+  { name: "Hoisting & Lifting", icon: "cog-outline" },
+  { name: "Risk Assessment", icon: "warning-outline" },
+  { name: "Tools & Equipment", icon: "hammer-outline" },
+  { name: "Fire Protection", icon: "flame-outline" },
+  { name: "Permits", icon: "document-text-outline" },
+  { name: "Electrical Safety", icon: "flash-outline" },
+  { name: "Hot Works", icon: "bonfire-outline" },
+  { name: "Lighting & Ventilation", icon: "bulb-outline" },
+  { name: "HSE Training & Induction", icon: "school-outline" },
+  { name: "Observations & Meetings", icon: "search-outline" },
+  { name: "Statistics & Reporting", icon: "stats-chart-outline" },
+  { name: "Incentives & Discipline", icon: "ribbon-outline" },
+  { name: "Health & Medical", icon: "medkit-outline" },
+  { name: "Confined Space", icon: "contract-outline" },
+];
+
+export function levelOf(avg: number) {
+  if (avg >= 4.5) return "Excellent";
+  if (avg >= 3.5) return "Good";
+  if (avg >= 2.5) return "Fair";
+  if (avg >= 1.5) return "Poor";
+  return "Very Poor";
+}
+
+function categoryScores(item: any): (number | null)[] {
+  const f = flat(item);
+  return CATEGORIES.map((qs) => {
+    let t = 0;
+    let c = 0;
+    for (const q of qs) {
+      const a = answer(f, q).toLowerCase();
+      if (!a || a === "not applicable") continue;
+      t += RATING[a] ?? 0;
+      c++;
+    }
+    return c > 0 ? t / c : null;
+  });
+}
+
+export function siteDetail(
+  items: any[],
+  siteOf: (i: any) => string,
+  site: string,
+) {
+  const rows = items.filter((i) => siteOf(i) === site);
+  const sums = CATEGORIES.map(() => ({ t: 0, n: 0 }));
+  let total = 0;
+  let last = 0;
+
+  for (const r of rows) {
+    let s = 0;
+    let c = 0;
+    categoryScores(r).forEach((v, idx) => {
+      if (v === null) return;
+      sums[idx].t += v;
+      sums[idx].n += 1;
+      s += v;
+      c += 1;
+    });
+    total += c > 0 ? s / c : 0;
+
+    const d = new Date(r._created ?? r?.fields?.Created ?? "");
+    if (!isNaN(d.getTime())) last = Math.max(last, d.getTime());
+  }
+
+  const avg = rows.length ? total / rows.length : 0;
+  const categories = CATEGORY_META.map((m, i) => ({
+    name: m.name,
+    icon: m.icon,
+    score: sums[i].n ? sums[i].t / sums[i].n : 0,
+  }));
+
+  return {
+    avg,
+    level: levelOf(avg),
+    surveys: rows.length,
+    last: last ? new Date(last) : null,
+    categories,
+  };
+}

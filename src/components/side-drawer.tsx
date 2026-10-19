@@ -1,13 +1,15 @@
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
 import {
-    Animated,
-    Dimensions,
-    Easing,
-    Image,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  Animated,
+  Dimensions,
+  Easing,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -17,15 +19,18 @@ const ORANGE = "#F9A31F";
 const INK = "#111111";
 const WIDTH = Math.min(Dimensions.get("window").width * 0.8, 320);
 
-type Item = { key: string; label: string; icon: string };
+type Item = {
+  key: string;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+};
 
 const ITEMS: Item[] = [
-  { key: "home", label: "Dashboard", icon: "◧" },
-  { key: "new", label: "New Survey", icon: "＋" },
-  { key: "mine", label: "My Submissions", icon: "☰" },
-  { key: "settings", label: "Settings", icon: "⚙" },
+  { key: "home", label: "Dashboard", icon: "grid-outline" },
+  { key: "new", label: "Project Sites", icon: "business-outline" },
+  { key: "mine", label: "Information", icon: "information-circle-outline" },
+  { key: "settings", label: "Monthly Analytics", icon: "stats-chart-outline" },
 ];
-
 export function SideDrawer({
   open,
   onClose,
@@ -38,6 +43,13 @@ export function SideDrawer({
   onSignOut: () => void;
 }) {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+
+  const go = (key: string) => {
+    onClose();
+    if (key === "home") router.replace("/");
+    if (key === "new") router.push("/projects" as any);
+  };
   const anim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -110,16 +122,20 @@ export function SideDrawer({
           {ITEMS.map((it, i) => (
             <Pressable
               key={it.key}
-              onPress={onClose}
+              onPress={() => go(it.key)}
               style={({ pressed }) => [
                 s.item,
                 i === 0 && s.itemActive,
                 pressed && { opacity: 0.7 },
               ]}
             >
-              <Text style={[s.icon, i === 0 && { color: ORANGE }]}>
-                {it.icon}
-              </Text>
+              <View style={s.iconBox}>
+                <Ionicons
+                  name={it.icon}
+                  size={20}
+                  color={i === 0 ? ORANGE : "#8E8E93"}
+                />
+              </View>
               <Text style={[s.label, i === 0 && { color: "#fff" }]}>
                 {it.label}
               </Text>
@@ -185,6 +201,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  iconBox: { width: 24, alignItems: "center" },
   fallbackText: { color: ORANGE, fontSize: 28, fontWeight: "800" },
   name: { color: "#fff", fontSize: 22, fontWeight: "800" },
   email: { color: "#8E8E93", fontSize: 13, marginTop: 3 },
