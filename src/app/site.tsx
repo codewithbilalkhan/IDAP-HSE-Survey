@@ -1,4 +1,5 @@
 import { AttachmentsGallery } from "@/components/attachments-gallery";
+import { ProjectInfoTab } from "@/components/project-info-tab";
 import { getSharePointToken } from "@/hooks/useMicrosoftAuth";
 import { fetchSitePhotos, type Photo } from "@/lib/attachments";
 import { Ionicons } from "@expo/vector-icons";
@@ -65,7 +66,7 @@ const MONTHS = [
 const fmtDate = (d: Date | null) =>
   d ? `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}` : "No data";
 
-const TABS = ["Overview", "Categories", "Attachments"] as const;
+const TABS = ["Overview", "Categories", "Attachments", "Project Info"] as const;
 
 /* ---------- animations ---------- */
 function Rise({ i = 0, children }: { i?: number; children: React.ReactNode }) {
@@ -649,7 +650,7 @@ export default function SiteDetail() {
                 ))}
               </Section>
             </View>
-          ) : (
+          ) : tab === "Attachments" ? (
             <View key="att">
               <AttachmentsGallery
                 photos={photos}
@@ -657,6 +658,15 @@ export default function SiteDetail() {
                 error={photoError}
                 token={spToken}
                 site={site}
+              />
+            </View>
+          ) : (
+            <View key="info">
+              <ProjectInfoTab
+                site={site}
+                city={city}
+                items={items}
+                accessToken={accessToken}
               />
             </View>
           )}
@@ -791,7 +801,7 @@ const s = StyleSheet.create({
     backgroundColor: C.dark,
   },
   tabBtn: { flex: 1, paddingVertical: 11, alignItems: "center" },
-  tabText: { color: "#6E6E73", fontSize: 13.5, fontWeight: "700" },
+  tabText: { color: "#6E6E73", fontSize: 12, fontWeight: "700" },
   tabTextOn: { color: C.orange },
 
   hero: {

@@ -6,6 +6,7 @@ export const AZURE = {
     "profile",
     "offline_access",
     "User.Read",
+    "User.ReadBasic.All",
     "Sites.Read.All",
   ],
   sharepointHost: "idappk.sharepoint.com",

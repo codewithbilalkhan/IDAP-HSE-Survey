@@ -55,7 +55,7 @@ function Tile({
       ]}
     >
       <View style={[s.iconBox, { backgroundColor: ICON_BG }]}>
-        <Ionicons name={icon} size={18} color={ICON} />
+        <Ionicons name={icon} size={17} color={ICON} />
       </View>
       <CountUp value={value} style={s.num} />
       <Text style={s.label} numberOfLines={1}>
@@ -108,29 +108,29 @@ export function KpiGrid(p: Props) {
 }
 
 const s = StyleSheet.create({
-  row: { flexDirection: "row", gap: 10 },
+  row: { flexDirection: "row", gap: 8 },
   tile: {
     flex: 1,
     backgroundColor: C.card,
-    borderRadius: 20,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
     alignItems: "flex-start",
     ...shadow,
   },
   iconBox: {
-    width: 34,
-    height: 34,
-    borderRadius: 11,
+    width: 28,
+    height: 28,
+    borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 12,
+    marginBottom: 8,
   },
   num: {
     color: C.ink,
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "700",
-    letterSpacing: -0.8,
+    letterSpacing: -0.6,
   },
-  label: { color: C.gray, fontSize: 11, fontWeight: "600", marginTop: 2 },
+  label: { color: C.gray, fontSize: 10, fontWeight: "600", marginTop: 1 },
 });
