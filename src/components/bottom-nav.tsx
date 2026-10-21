@@ -17,7 +17,7 @@ const TABS = [
   },
   {
     label: "Projects Info",
-    path: "/team",
+    path: "/project-info",
     on: "information-circle",
     off: "information-circle-outline",
   },
@@ -25,13 +25,16 @@ const TABS = [
 
 // /site ek project ka detail hai, isliye Projects highlight rahe
 const indexFor = (p: string) =>
-  p.startsWith("/projects") || p.startsWith("/site")
-    ? 1
-    : p.startsWith("/team")
-      ? 2
+  p.startsWith("/project-info")
+    ? 2
+    : p.startsWith("/projects") || p.startsWith("/site")
+      ? 1
       : 0;
 
 export const NAV_HEIGHT = 66;
+// total space the floating nav takes from the bottom of the screen
+export const navSpace = (bottomInset: number) =>
+  Math.max(bottomInset, 10) + 6 + NAV_HEIGHT;
 
 export function BottomNav() {
   const insets = useSafeAreaInsets();
@@ -69,80 +72,97 @@ export function BottomNav() {
   const tabW = barW > 0 ? (barW - PAD * 2) / TABS.length : 0;
 
   return (
-    <View
-      pointerEvents="box-none"
-      style={[s.wrap, { bottom: Math.max(insets.bottom, 10) + 6 }]}
-    >
-      <View style={s.bar} onLayout={(e) => setBarW(e.nativeEvent.layout.width)}>
-        <View style={s.glow} />
+    <>
+      <View
+        pointerEvents="none"
+        style={[s.strip, { height: navSpace(insets.bottom) - NAV_HEIGHT / 2 }]}
+      />
+      <View
+        pointerEvents="box-none"
+        style={[s.wrap, { bottom: Math.max(insets.bottom, 10) + 6 }]}
+      >
+        <View
+          style={s.bar}
+          onLayout={(e) => setBarW(e.nativeEvent.layout.width)}
+        >
+          <View style={s.glow} />
 
-        {tabW > 0 && (
-          <Animated.View
-            style={[
-              s.indicator,
-              {
-                width: tabW,
-                transform: [
-                  {
-                    translateX: slide.interpolate({
-                      inputRange: [0, TABS.length - 1],
-                      outputRange: [0, tabW * (TABS.length - 1)],
-                    }),
-                  },
-                ],
-              },
-            ]}
-          >
-            <View style={s.indicatorLine} />
-          </Animated.View>
-        )}
-
-        {TABS.map((t, i) => {
-          const on = i === active;
-          return (
-            <Pressable
-              key={t.path}
-              onPress={() => {
-                if (!on || pathname !== t.path) router.navigate(t.path as any);
-              }}
-              style={s.tab}
-              hitSlop={6}
-            >
-              <Animated.View
-                style={{
-                  alignItems: "center",
+          {tabW > 0 && (
+            <Animated.View
+              style={[
+                s.indicator,
+                {
+                  width: tabW,
                   transform: [
                     {
-                      translateY: scales[i].interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0, -1],
-                      }),
-                    },
-                    {
-                      scale: scales[i].interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [1, 1.12],
+                      translateX: slide.interpolate({
+                        inputRange: [0, TABS.length - 1],
+                        outputRange: [0, tabW * (TABS.length - 1)],
                       }),
                     },
                   ],
+                },
+              ]}
+            >
+              <View style={s.indicatorLine} />
+            </Animated.View>
+          )}
+
+          {TABS.map((t, i) => {
+            const on = i === active;
+            return (
+              <Pressable
+                key={t.path}
+                onPress={() => {
+                  if (!on || pathname !== t.path)
+                    router.navigate(t.path as any);
                 }}
+                style={s.tab}
+                hitSlop={6}
               >
-                <Ionicons
-                  name={(on ? t.on : t.off) as any}
-                  size={22}
-                  color={on ? C.orange : "#8E8E93"}
-                />
-              </Animated.View>
-              <Text style={[s.label, on && s.labelOn]}>{t.label}</Text>
-            </Pressable>
-          );
-        })}
+                <Animated.View
+                  style={{
+                    alignItems: "center",
+                    transform: [
+                      {
+                        translateY: scales[i].interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0, -1],
+                        }),
+                      },
+                      {
+                        scale: scales[i].interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [1, 1.12],
+                        }),
+                      },
+                    ],
+                  }}
+                >
+                  <Ionicons
+                    name={(on ? t.on : t.off) as any}
+                    size={22}
+                    color={on ? C.orange : "#8E8E93"}
+                  />
+                </Animated.View>
+                <Text style={[s.label, on && s.labelOn]}>{t.label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
-    </View>
+    </>
   );
 }
 
 const s = StyleSheet.create({
+  strip: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: C.bg,
+  },
   wrap: {
     position: "absolute",
     left: 20,

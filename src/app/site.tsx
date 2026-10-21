@@ -20,7 +20,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 
 import { AppHeader } from "@/components/app-header";
-import { BottomNav } from "@/components/bottom-nav";
+import { BottomNav, navSpace } from "@/components/bottom-nav";
+import { ScrollTopButton } from "@/components/scroll-top-button";
 import { SideDrawer } from "@/components/side-drawer";
 import { FIELDS, getField } from "@/constants/fields";
 import { SITE_CITY } from "@/constants/site-cities";
@@ -335,6 +336,8 @@ export default function SiteDetail() {
   const [tab, setTab] = useState<(typeof TABS)[number]>("Overview");
   const [tabW, setTabW] = useState(0);
   const slide = useRef(new Animated.Value(0)).current;
+  const listRef = useRef<ScrollView>(null);
+  const [showTop, setShowTop] = useState(false);
 
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [spToken, setSpToken] = useState("");
@@ -416,7 +419,13 @@ export default function SiteDetail() {
       <StatusBar style="light" />
 
       <ScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom + 50 }}
+        ref={listRef}
+        onScroll={(e) => {
+          const show = e.nativeEvent.contentOffset.y > 350;
+          setShowTop((p) => (p === show ? p : show));
+        }}
+        scrollEventThrottle={16}
+        contentContainerStyle={{ paddingBottom: navSpace(insets.bottom) + 20 }}
         showsVerticalScrollIndicator={false}
       >
         <AppHeader profile={profile} onMenuPress={() => setMenuOpen(true)} />
@@ -673,6 +682,12 @@ export default function SiteDetail() {
           )}
         </View>
       </ScrollView>
+
+      <ScrollTopButton
+        visible={showTop}
+        bottom={insets.bottom + 100}
+        onPress={() => listRef.current?.scrollTo({ y: 0, animated: true })}
+      />
 
       <BottomNav />
       <SideDrawer

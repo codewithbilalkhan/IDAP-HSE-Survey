@@ -1,8 +1,9 @@
 import { AppHeader } from "@/components/app-header";
-import { BottomNav } from "@/components/bottom-nav";
+import { BottomNav, navSpace } from "@/components/bottom-nav";
 import { KpiGrid } from "@/components/kpi-grid";
 import { LoadingOverlay } from "@/components/loading-overlay";
 import { PerformanceCard } from "@/components/performance-card";
+import { ScrollTopButton } from "@/components/scroll-top-button";
 import { SideDrawer } from "@/components/side-drawer";
 import { StaggerIn } from "@/components/stagger-in";
 import { TopSites } from "@/components/top-sites";
@@ -71,6 +72,9 @@ export default function Index() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [firstLoaded, setFirstLoaded] = useState(false);
+
+  const listRef = useRef<ScrollView>(null);
+  const [showTop, setShowTop] = useState(false);
 
   const openMenu = useCallback(() => setMenuOpen(true), []);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
@@ -223,6 +227,12 @@ export default function Index() {
       <StatusBar style="light" />
 
       <ScrollView
+        ref={listRef}
+        onScroll={(e) => {
+          const show = e.nativeEvent.contentOffset.y > 150;
+          setShowTop((p) => (p === show ? p : show));
+        }}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
             refreshing={loading}
@@ -230,7 +240,7 @@ export default function Index() {
             tintColor={C.orange}
           />
         }
-        contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
+        contentContainerStyle={{ paddingBottom: navSpace(insets.bottom) + 20 }}
         showsVerticalScrollIndicator={false}
       >
         <AppHeader
@@ -289,6 +299,12 @@ export default function Index() {
           </StaggerIn>
         </View>
       </ScrollView>
+
+      <ScrollTopButton
+        visible={showTop}
+        bottom={insets.bottom + 100}
+        onPress={() => listRef.current?.scrollTo({ y: 0, animated: true })}
+      />
       <BottomNav />
       <SideDrawer
         open={menuOpen}

@@ -18,7 +18,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppHeader } from "@/components/app-header";
-import { BottomNav } from "@/components/bottom-nav";
+import { BottomNav, navSpace } from "@/components/bottom-nav";
+import { ScrollTopButton } from "@/components/scroll-top-button";
 import { SideDrawer } from "@/components/side-drawer";
 import { FIELDS, getField } from "@/constants/fields";
 import { SITE_CITY } from "@/constants/site-cities";
@@ -183,6 +184,8 @@ export default function Projects() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [items, setItems] = useState<any[]>(getCache() ?? []);
   const [loading, setLoading] = useState(false);
+  const listRef = useRef<FlatList>(null);
+  const [showTop, setShowTop] = useState(false);
 
   const chipsRef = useRef<ScrollView>(null);
   const chipX = useRef<Record<string, number>>({});
@@ -332,6 +335,12 @@ export default function Projects() {
       <StatusBar style="light" />
 
       <FlatList
+        ref={listRef}
+        onScroll={(e) => {
+          const show = e.nativeEvent.contentOffset.y > 350;
+          setShowTop((p) => (p === show ? p : show));
+        }}
+        scrollEventThrottle={16}
         data={list}
         keyExtractor={(i) => i.site}
         ListHeaderComponent={header}
@@ -342,7 +351,7 @@ export default function Projects() {
             tintColor={C.orange}
           />
         }
-        contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
+        contentContainerStyle={{ paddingBottom: navSpace(insets.bottom) + 20 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
@@ -372,6 +381,13 @@ export default function Projects() {
             </FadeIn>
           </View>
         )}
+      />
+      <ScrollTopButton
+        visible={showTop}
+        bottom={insets.bottom + 100}
+        onPress={() =>
+          listRef.current?.scrollToOffset({ offset: 0, animated: true })
+        }
       />
 
       <BottomNav />
