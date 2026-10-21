@@ -17,7 +17,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppHeader } from "@/components/app-header";
-import { BottomNav } from "@/components/bottom-nav";
+import { BottomNav, navSpace } from "@/components/bottom-nav";
 import { ScrollTopButton } from "@/components/scroll-top-button";
 import { SideDrawer } from "@/components/side-drawer";
 import { FIELDS, getField } from "@/constants/fields";
@@ -279,18 +279,26 @@ function RespRow({
   max,
   token,
   index,
+  onPress,
 }: {
   r: Resp;
   rank: number;
   max: number;
   token: string;
   index: number;
+  onPress: () => void;
 }) {
   const medal = rank < 3 ? MEDAL[rank] : null;
   const pct = max > 0 ? (r.surveys / max) * 100 : 0;
 
   return (
-    <View style={s.row}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        s.row,
+        pressed && { transform: [{ scale: 0.985 }] },
+      ]}
+    >
       <View style={[s.accent, { backgroundColor: GOLD }]} />
 
       <View>
@@ -337,7 +345,7 @@ function RespRow({
           </View>
         ) : null}
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -502,7 +510,7 @@ export default function Respondents() {
             tintColor={C.orange}
           />
         }
-        contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
+        contentContainerStyle={{ paddingBottom: navSpace(insets.bottom) + 20 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
@@ -523,6 +531,12 @@ export default function Respondents() {
                 max={max}
                 token={accessToken ?? ""}
                 index={index}
+                onPress={() =>
+                  router.push({
+                    pathname: "/respondent",
+                    params: { email: item.email },
+                  } as any)
+                }
               />
             </FadeIn>
           </View>
@@ -536,8 +550,6 @@ export default function Respondents() {
           listRef.current?.scrollToOffset({ offset: 0, animated: true })
         }
       />
-      <BottomNav />
-
       <BottomNav />
       <SideDrawer
         open={menuOpen}

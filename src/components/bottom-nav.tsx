@@ -8,21 +8,26 @@ import { C } from "@/constants/theme";
 import { useMicrosoftAuth } from "@/hooks/useMicrosoftAuth";
 
 const TABS = [
-  { label: "Dashboard", path: "/", on: "home", off: "grid-outline" },
+  { label: "Dashboard", path: "/", on: "grid-outline", off: "grid-outline" },
   {
     label: "Projects",
     path: "/projects",
-    on: "business",
+    on: "business-outline",
     off: "business-outline",
   },
   {
     label: "Projects Info",
     path: "/project-info",
-    on: "information-circle",
+    on: "information-circle-outline",
     off: "information-circle-outline",
   },
+  {
+    label: "Analytics",
+    path: "/monthly-analytics",
+    on: "bar-chart-outline",
+    off: "bar-chart-outline",
+  },
 ] as const;
-
 // /site ek project ka detail hai, isliye Projects highlight rahe
 const indexFor = (p: string) =>
   p.startsWith("/project-info")
