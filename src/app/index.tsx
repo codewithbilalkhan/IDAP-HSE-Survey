@@ -1,4 +1,5 @@
 import { AppHeader } from "@/components/app-header";
+import { BottomNav } from "@/components/bottom-nav";
 import { KpiGrid } from "@/components/kpi-grid";
 import { LoadingOverlay } from "@/components/loading-overlay";
 import { PerformanceCard } from "@/components/performance-card";
@@ -11,6 +12,7 @@ import { getSurveyItems } from "@/hooks/sharepoint";
 import { useMicrosoftAuth } from "@/hooks/useMicrosoftAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { computeKpis } from "@/lib/hse-kpis";
+import { setLastSurvey } from "@/lib/last-survey";
 import { getCache, setCache } from "@/lib/survey-cache";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -124,6 +126,20 @@ export default function Index() {
     [items],
   );
 
+  const lastSurvey = useMemo(() => {
+    let best: Date | null = null;
+    for (const it of items) {
+      const raw = getField(it, FIELDS.submissionDate) || it?._created;
+      const d = raw ? new Date(raw) : null;
+      if (d && !isNaN(d.getTime()) && (!best || d > best)) best = d;
+    }
+    return best;
+  }, [items]);
+
+  useEffect(() => {
+    if (lastSurvey) setLastSurvey(lastSurvey);
+  }, [lastSurvey]);
+
   if (!accessToken) {
     return (
       <View style={s.screen}>
@@ -217,7 +233,11 @@ export default function Index() {
         contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
         showsVerticalScrollIndicator={false}
       >
-        <AppHeader profile={profile} onMenuPress={openMenu} />
+        <AppHeader
+          profile={profile}
+          onMenuPress={openMenu}
+          lastSurvey={lastSurvey}
+        />
 
         <View style={s.body}>
           <StaggerIn index={0} play={firstLoaded}>
@@ -269,7 +289,7 @@ export default function Index() {
           </StaggerIn>
         </View>
       </ScrollView>
-
+      <BottomNav />
       <SideDrawer
         open={menuOpen}
         onClose={closeMenu}

@@ -1,25 +1,107 @@
-import { useEffect, useState } from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import {
+  Animated,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { FIELDS, getField } from "@/constants/fields";
 import { C } from "@/constants/theme";
 import type { Profile } from "@/hooks/useProfile";
+import { useLastSurvey } from "@/lib/last-survey";
+import { getCache } from "@/lib/survey-cache";
+
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+const DAY = 86400000;
+
+// Last known profile, shared by every header instance so screens
+// don't flash "Welcome" while the profile reloads.
+let cachedProfile: Profile | null = null;
+
+// Call this on sign out so the next user doesn't see the old name.
+export function clearHeaderProfile() {
+  cachedProfile = null;
+}
+
+const fmtDate = (d: Date) =>
+  `${String(d.getDate()).padStart(2, "0")} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+
+const ago = (d: Date) => {
+  const days = Math.floor((Date.now() - d.getTime()) / DAY);
+  if (days <= 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 30) return `${days} days ago`;
+  if (days < 365) {
+    const m = Math.floor(days / 30);
+    return `${m} ${m === 1 ? "month" : "months"} ago`;
+  }
+  const y = Math.floor(days / 365);
+  return `${y} ${y === 1 ? "year" : "years"} ago`;
+};
+
+const latestFrom = (items: any[] | null | undefined): Date | null => {
+  let best: Date | null = null;
+  for (const it of items ?? []) {
+    const raw = getField(it, FIELDS.submissionDate) || it?._created;
+    const d = raw ? new Date(raw) : null;
+    if (d && !isNaN(d.getTime()) && (!best || d > best)) best = d;
+  }
+  return best;
+};
 
 export function AppHeader({
-  profile,
+  profile: profileProp,
   onMenuPress,
+  lastSurvey: lastSurveyProp = null,
 }: {
   profile: Profile | null;
   onMenuPress: () => void;
+  lastSurvey?: Date | null;
 }) {
   const insets = useSafeAreaInsets();
   const [now, setNow] = useState(new Date());
+
+  // remember the latest real profile, fall back to it while a new screen loads
+  if (profileProp) cachedProfile = profileProp;
+  const profile = profileProp ?? cachedProfile;
+
+  const pulse = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.timing(pulse, {
+        toValue: 1,
+        duration: 1800,
+        useNativeDriver: true,
+      }),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse]);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 20000);
     return () => clearInterval(id);
   }, []);
 
+  const shared = useLastSurvey();
+  const lastSurvey = lastSurveyProp ?? shared ?? latestFrom(getCache());
   const name = profile?.name || "Welcome";
   const h = now.getHours();
   const greet =
@@ -67,12 +149,48 @@ export function AppHeader({
 
       <View style={s.textBlock}>
         <Text style={s.greet}>{greet}</Text>
-        <Text style={s.name} numberOfLines={1}>
-          {name}
-        </Text>
+
+        <View style={[s.nameRow, !!lastSurvey && { paddingRight: 140 }]}>
+          <Text style={s.name} numberOfLines={1}>
+            {name}
+          </Text>
+        </View>
+
         <View style={s.datePill}>
           <Text style={s.date}>{date}</Text>
         </View>
+
+        {lastSurvey && (
+          <View style={[s.chip, s.chipAbs]}>
+            <View style={s.chipTop}>
+              <View style={s.liveWrap}>
+                <Animated.View
+                  style={[
+                    s.liveHalo,
+                    {
+                      opacity: pulse.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.55, 0],
+                      }),
+                      transform: [
+                        {
+                          scale: pulse.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [1, 2.8],
+                          }),
+                        },
+                      ],
+                    },
+                  ]}
+                />
+                <View style={s.liveDot} />
+              </View>
+              <Text style={s.chipEyebrow}>LAST SURVEY</Text>
+            </View>
+            <Text style={s.chipDate}>{fmtDate(lastSurvey)}</Text>
+            <Text style={s.chipAgo}>{ago(lastSurvey)}</Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -150,13 +268,65 @@ const s = StyleSheet.create({
 
   textBlock: { marginTop: 30 },
   greet: { color: C.grayLight, fontSize: 14 },
+
+  nameRow: {
+    marginTop: 0,
+  },
   name: {
     color: "#fff",
-    fontSize: 30,
+    fontSize: 25,
     fontWeight: "700",
-    letterSpacing: -1,
-    marginTop: 2,
+    letterSpacing: -0.7,
   },
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 16,
+    backgroundColor: "rgba(249,162,30,0.10)",
+    borderWidth: 1,
+    borderColor: "rgba(249,162,30,0.35)",
+    alignItems: "flex-end",
+  },
+  chipAbs: {
+    position: "absolute",
+    right: 0,
+    top: 0,
+  },
+  chipTop: { flexDirection: "row", alignItems: "center", gap: 6 },
+  liveWrap: {
+    width: 8,
+    height: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  liveHalo: {
+    position: "absolute",
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: C.orange,
+  },
+  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.orange },
+  chipEyebrow: {
+    color: C.grayLight,
+    fontSize: 8.5,
+    fontWeight: "800",
+    letterSpacing: 1.8,
+  },
+  chipDate: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: -0.3,
+    marginTop: 5,
+  },
+  chipAgo: {
+    color: C.orange,
+    fontSize: 10.5,
+    fontWeight: "700",
+    marginTop: 1,
+  },
+
   datePill: {
     alignSelf: "flex-start",
     backgroundColor: "rgba(249,162,30,0.14)",

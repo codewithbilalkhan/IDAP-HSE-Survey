@@ -7,19 +7,20 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    Animated,
-    Easing,
-    Image,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Animated,
+  Easing,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 
 import { AppHeader } from "@/components/app-header";
+import { BottomNav } from "@/components/bottom-nav";
 import { SideDrawer } from "@/components/side-drawer";
 import { FIELDS, getField } from "@/constants/fields";
 import { SITE_CITY } from "@/constants/site-cities";
@@ -673,6 +674,7 @@ export default function SiteDetail() {
         </View>
       </ScrollView>
 
+      <BottomNav />
       <SideDrawer
         open={menuOpen}
         onClose={() => setMenuOpen(false)}

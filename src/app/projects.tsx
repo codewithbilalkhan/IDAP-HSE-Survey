@@ -18,6 +18,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppHeader } from "@/components/app-header";
+import { BottomNav } from "@/components/bottom-nav";
 import { SideDrawer } from "@/components/side-drawer";
 import { FIELDS, getField } from "@/constants/fields";
 import { SITE_CITY } from "@/constants/site-cities";
@@ -373,6 +374,7 @@ export default function Projects() {
         )}
       />
 
+      <BottomNav />
       <SideDrawer
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
