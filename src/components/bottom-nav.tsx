@@ -7,36 +7,61 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C } from "@/constants/theme";
 import { useMicrosoftAuth } from "@/hooks/useMicrosoftAuth";
 
-const TABS = [
-  { label: "Dashboard", path: "/", on: "grid-outline", off: "grid-outline" },
+type Tab = {
+  label: string;
+  path: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  // kon se paths par yeh tab highlight rahe
+  match: (p: string) => boolean;
+};
+
+const TABS: Tab[] = [
+  {
+    label: "Dashboard",
+    path: "/",
+    icon: "grid-outline",
+    match: (p) => p === "/" || p === "/index",
+  },
   {
     label: "Projects",
     path: "/projects",
-    on: "business-outline",
-    off: "business-outline",
+    icon: "business-outline",
+    // /site ek project ka detail hai, isliye Projects highlight rahe
+    match: (p) => p.startsWith("/projects") || p.startsWith("/site"),
   },
   {
-    label: "Projects Info",
+    label: "Today",
+    path: "/today",
+    icon: "today-outline",
+    match: (p) => p.startsWith("/today"),
+  },
+  {
+    label: "Surveyors",
+    path: "/team",
+    icon: "people-outline",
+    // /respondent ek surveyor ka detail hai, isliye Surveyors highlight rahe
+    match: (p) => p.startsWith("/team") || p.startsWith("/respondent"),
+  },
+  {
+    label: "Info",
     path: "/project-info",
-    on: "information-circle-outline",
-    off: "information-circle-outline",
+    icon: "information-circle-outline",
+    match: (p) => p.startsWith("/project-info"),
   },
   {
     label: "Analytics",
     path: "/monthly-analytics",
-    on: "bar-chart-outline",
-    off: "bar-chart-outline",
+    icon: "bar-chart-outline",
+    match: (p) => p.startsWith("/monthly-analytics"),
   },
-] as const;
-// /site ek project ka detail hai, isliye Projects highlight rahe
+];
+
+// koi match na mile to Dashboard highlight rahe
 const indexFor = (p: string) =>
-  p.startsWith("/project-info")
-    ? 2
-    : p.startsWith("/monthly-analytics")
-      ? 3
-      : p.startsWith("/projects") || p.startsWith("/site")
-        ? 1
-        : 0;
+  Math.max(
+    0,
+    TABS.findIndex((t) => t.match(p)),
+  );
 
 export const NAV_HEIGHT = 66;
 // total space the floating nav takes from the bottom of the screen
@@ -147,12 +172,19 @@ export function BottomNav() {
                   }}
                 >
                   <Ionicons
-                    name={(on ? t.on : t.off) as any}
-                    size={22}
+                    name={t.icon}
+                    size={21}
                     color={on ? C.orange : "#8E8E93"}
                   />
                 </Animated.View>
-                <Text style={[s.label, on && s.labelOn]}>{t.label}</Text>
+                <Text
+                  style={[s.label, on && s.labelOn]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
+                >
+                  {t.label}
+                </Text>
               </Pressable>
             );
           })}
@@ -172,8 +204,8 @@ const s = StyleSheet.create({
   },
   wrap: {
     position: "absolute",
-    left: 20,
-    right: 20,
+    left: 12,
+    right: 12,
   },
   bar: {
     height: NAV_HEIGHT,
@@ -213,7 +245,7 @@ const s = StyleSheet.create({
     alignItems: "center",
   },
   indicatorLine: {
-    width: 22,
+    width: 18,
     height: 3,
     borderBottomLeftRadius: 3,
     borderBottomRightRadius: 3,
@@ -225,12 +257,13 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 3,
+    paddingHorizontal: 4,
   },
   label: {
     color: "#8E8E93",
-    fontSize: 10.5,
+    fontSize: 9,
     fontWeight: "700",
-    letterSpacing: 0.3,
+    letterSpacing: 0,
   },
   labelOn: { color: C.orange, fontWeight: "800" },
 });

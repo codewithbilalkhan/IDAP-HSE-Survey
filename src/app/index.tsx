@@ -20,6 +20,7 @@ import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
+  AppState,
   Easing,
   Image,
   Pressable,
@@ -49,17 +50,11 @@ function MicrosoftLogo() {
   );
 }
 
-function isToday(value: any) {
-  if (!value) return false;
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return false;
-  const n = new Date();
-  return (
-    d.getFullYear() === n.getFullYear() &&
-    d.getMonth() === n.getMonth() &&
-    d.getDate() === n.getDate()
-  );
-}
+// data ka signature: sirf tab update karo jab kuch badla ho
+const sigOf = (d: any[]) =>
+  d.length +
+  "|" +
+  d.map((x) => x?.["@odata.etag"] ?? x?.id ?? x?.fields?.id).join(",");
 
 export default function Index() {
   const insets = useSafeAreaInsets();
@@ -75,6 +70,7 @@ export default function Index() {
 
   const listRef = useRef<ScrollView>(null);
   const [showTop, setShowTop] = useState(false);
+  const lastSig = useRef("");
 
   const openMenu = useCallback(() => setMenuOpen(true), []);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
@@ -90,20 +86,14 @@ export default function Index() {
     }).start();
   }, [enter]);
 
-  useEffect(() => {
-    if (items[0]) {
-      const f = { ...items[0], ...(items[0].fields ?? {}) };
-      console.log("KEYS:", JSON.stringify(Object.keys(f)));
-      console.log("SAMPLE:", JSON.stringify(f).slice(0, 1200));
-    }
-  }, [items]);
-
+  // pull-to-refresh aur pehli load (spinner ke saath)
   const load = useCallback(async () => {
     if (!accessToken) return;
     setLoading(true);
     setError("");
     try {
       const data = await getSurveyItems(accessToken);
+      lastSig.current = sigOf(data);
       setCache(data);
       setItems(data);
     } catch (e: any) {
@@ -114,16 +104,43 @@ export default function Index() {
     }
   }, [accessToken]);
 
+  // silent auto-sync (spinner nahi, sirf naya data aaye to update)
+  const sync = useCallback(async () => {
+    if (!accessToken) return;
+    try {
+      const data = await getSurveyItems(accessToken);
+      const sig = sigOf(data);
+      if (sig === lastSig.current) return;
+      lastSig.current = sig;
+      setCache(data);
+      setItems(data);
+    } catch {}
+  }, [accessToken]);
+
   useEffect(() => {
     if (!accessToken) return;
     const cached = getCache();
     if (cached) {
       setItems(cached);
       setFirstLoaded(true);
+      lastSig.current = sigOf(cached);
+      sync(); // cache dikha do, aur peeche se taaza data le aao
     } else {
       load();
     }
-  }, [accessToken, load]);
+  }, [accessToken, load, sync]);
+
+  useEffect(() => {
+    if (!accessToken) return;
+    const id = setInterval(sync, 60000); // har 60 second
+    const sub = AppState.addEventListener("change", (st) => {
+      if (st === "active") sync(); // app wapas khulte hi
+    });
+    return () => {
+      clearInterval(id);
+      sub.remove();
+    };
+  }, [accessToken, sync]);
 
   const { sites, respondents, today, poor, breakdown, top } = useMemo(
     () => computeKpis(items, (i) => getField(i, FIELDS.projectSite)),
@@ -259,12 +276,7 @@ export default function Index() {
               poor={poor}
               onSites={() => router.push("/projects" as any)}
               onRespondents={() => router.push("/team" as any)}
-              onToday={() =>
-                router.push({
-                  pathname: "/projects",
-                  params: { filter: "today" },
-                } as any)
-              }
+              onToday={() => router.push("/today" as any)}
               onPoor={() =>
                 router.push({
                   pathname: "/projects",

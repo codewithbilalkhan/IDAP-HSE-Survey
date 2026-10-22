@@ -1,11 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { usePathname, useRouter } from "expo-router";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
   Easing,
   Image,
+  Modal,
   Pressable,
   StyleSheet,
   Text,
@@ -23,13 +24,57 @@ type Item = {
   key: string;
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
+  route: string;
+  // kon se paths par yeh item highlight rahe
+  match: (path: string) => boolean;
 };
 
 const ITEMS: Item[] = [
-  { key: "home", label: "Dashboard", icon: "grid-outline" },
-  { key: "new", label: "Project Sites", icon: "business-outline" },
-  { key: "mine", label: "Information", icon: "information-circle-outline" },
-  { key: "settings", label: "Monthly Analytics", icon: "stats-chart-outline" },
+  {
+    key: "home",
+    label: "Dashboard",
+    icon: "grid-outline",
+    route: "/",
+    match: (p) => p === "/" || p === "/index",
+  },
+  {
+    key: "projects",
+    label: "Project Sites",
+    icon: "business-outline",
+    route: "/projects",
+    // /site ek project ka detail hai, isliye Project Sites highlight rahe
+    match: (p) => p.startsWith("/projects") || p.startsWith("/site"),
+  },
+  {
+    key: "today",
+    label: "Today's Surveys",
+    icon: "today-outline",
+    route: "/today",
+    match: (p) => p.startsWith("/today"),
+  },
+  {
+    key: "surveyors",
+    label: "Surveyors",
+    icon: "people-outline",
+    // /respondent ek surveyor ka detail hai (email param chahiye),
+    // list /team par hai, isliye drawer /team kholta hai
+    route: "/team",
+    match: (p) => p.startsWith("/team") || p.startsWith("/respondent"),
+  },
+  {
+    key: "info",
+    label: "Information",
+    icon: "information-circle-outline",
+    route: "/project-info",
+    match: (p) => p.startsWith("/project-info"),
+  },
+  {
+    key: "analytics",
+    label: "Monthly Analytics",
+    icon: "stats-chart-outline",
+    route: "/monthly-analytics",
+    match: (p) => p.startsWith("/monthly-analytics"),
+  },
 ];
 
 // Last known profile, shared by every drawer instance so screens
@@ -61,23 +106,17 @@ export function SideDrawer({
   if (profileProp) cachedProfile = profileProp;
   const profile = profileProp ?? cachedProfile;
 
-  // /site ek project ka detail hai, isliye Project Sites highlight rahe.
-  // /project-info ko /projects se pehle check karna zaroori hai.
-  const active = pathname.startsWith("/project-info")
-    ? 2
-    : pathname.startsWith("/monthly-analytics")
-      ? 3
-      : pathname.startsWith("/projects") || pathname.startsWith("/site")
-        ? 1
-        : 0;
+  // koi match na mile to Dashboard highlight rahe
+  const active = Math.max(
+    0,
+    ITEMS.findIndex((it) => it.match(pathname)),
+  );
 
-  const go = (key: string) => {
+  const go = (route: string) => {
     onClose();
-    if (key === "home") router.navigate("/" as any);
-    if (key === "new") router.navigate("/projects" as any);
-    if (key === "mine") router.navigate("/project-info" as any);
-    if (key === "settings") router.navigate("/monthly-analytics" as any);
+    router.navigate(route as any);
   };
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const anim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -150,7 +189,7 @@ export function SideDrawer({
           {ITEMS.map((it, i) => (
             <Pressable
               key={it.key}
-              onPress={() => go(it.key)}
+              onPress={() => go(it.route)}
               style={({ pressed }) => [
                 s.item,
                 i === active && s.itemActive,
@@ -174,16 +213,63 @@ export function SideDrawer({
         <View style={{ flex: 1 }} />
 
         <Pressable
-          onPress={() => {
-            onClose();
-            onSignOut();
-          }}
+          onPress={() => setConfirmOpen(true)}
           style={({ pressed }) => [s.signOut, pressed && { opacity: 0.8 }]}
         >
           <Text style={s.signOutText}>Sign out</Text>
         </Pressable>
         <Text style={s.version}>IDAP HSE Survey v1.0.0</Text>
       </Animated.View>
+
+      {/* sign out confirmation */}
+      <Modal
+        visible={confirmOpen}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setConfirmOpen(false)}
+      >
+        <View style={s.modalWrap}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => setConfirmOpen(false)}
+          />
+          <View style={s.modalCard}>
+            <View style={s.modalIcon}>
+              <Ionicons name="log-out-outline" size={26} color={ORANGE} />
+            </View>
+            <Text style={s.modalTitle}>Sign out?</Text>
+            <Text style={s.modalSub}>Are you sure you want to sign out?</Text>
+
+            <View style={s.modalBtns}>
+              <Pressable
+                onPress={() => setConfirmOpen(false)}
+                style={({ pressed }) => [
+                  s.btn,
+                  s.btnCancel,
+                  pressed && { opacity: 0.8 },
+                ]}
+              >
+                <Text style={s.btnCancelText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setConfirmOpen(false);
+                  onClose();
+                  onSignOut();
+                }}
+                style={({ pressed }) => [
+                  s.btn,
+                  s.btnYes,
+                  pressed && { opacity: 0.85 },
+                ]}
+              >
+                <Text style={s.btnYesText}>Yes, sign out</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -244,7 +330,6 @@ const s = StyleSheet.create({
     borderRadius: 16,
   },
   itemActive: { backgroundColor: "rgba(249,163,31,0.14)" },
-  icon: { color: "#8E8E93", fontSize: 18, width: 24, textAlign: "center" },
   label: { color: "#A1A1A6", fontSize: 16, fontWeight: "600" },
 
   signOut: {
@@ -256,5 +341,57 @@ const s = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.1)",
   },
   signOutText: { color: "#fff", fontWeight: "700", fontSize: 15 },
+
+  /* confirm modal */
+  modalWrap: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 28,
+  },
+  modalCard: {
+    width: "100%",
+    maxWidth: 340,
+    backgroundColor: INK,
+    borderRadius: 28,
+    padding: 24,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(249,163,31,0.28)",
+  },
+  modalIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(249,163,31,0.14)",
+    borderWidth: 1,
+    borderColor: "rgba(249,163,31,0.4)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 14,
+  },
+  modalTitle: { color: "#fff", fontSize: 20, fontWeight: "800" },
+  modalSub: {
+    color: "#8E8E93",
+    fontSize: 14,
+    textAlign: "center",
+    marginTop: 6,
+  },
+  modalBtns: { flexDirection: "row", gap: 10, marginTop: 22 },
+  btn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 16,
+    alignItems: "center",
+  },
+  btnCancel: {
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+  },
+  btnCancelText: { color: "#fff", fontWeight: "700", fontSize: 14.5 },
+  btnYes: { backgroundColor: ORANGE },
+  btnYesText: { color: INK, fontWeight: "800", fontSize: 14.5 },
   version: { color: "#555", fontSize: 11, textAlign: "center", marginTop: 14 },
 });

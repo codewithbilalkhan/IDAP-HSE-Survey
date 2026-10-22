@@ -16,11 +16,16 @@ type Store = {
 
 let storage: Store | null = null;
 try {
-  // native module na ho to require throw karta hai, app crash nahi hogi
-  storage = require("@react-native-async-storage/async-storage").default;
+  storage = require("expo-sqlite/kv-store").default;
 } catch {
-  storage = null; // read state sirf memory mein rahegi
+  try {
+    storage = require("@react-native-async-storage/async-storage").default;
+  } catch {
+    storage = null; // read state sirf memory mein rahegi
+  }
 }
+// check karne ke liye uncomment karo:
+console.log("storage available:", !!storage);
 
 export type NotifKind = "alert" | "survey";
 export type Notif = {
@@ -33,6 +38,7 @@ export type Notif = {
   score: number; // 0 = score available nahi
   level: string;
   time: Date;
+  unread?: boolean;
 };
 
 const DAY = 86400000;
@@ -131,25 +137,38 @@ function build(items: any[] | null | undefined): Notif[] {
 }
 
 /* ---------------- read state (tiny store) ---------------- */
-const KEY = "notif-read-state-v1";
+const KEY = "notif-read-state-v2";
+const MAX_SAVED = 500;
 const listeners = new Set<() => void>();
 let version = 0;
+let hydrated = false;
 let baseline = Date.now() - UNREAD_WINDOW;
 const readIds = new Set<string>();
+let snap = {
+  hydrated: false,
+  baseline,
+  ids: new Set<string>() as Set<string>,
+};
 
 const emit = () => {
   version++;
+  snap = { hydrated, baseline, ids: new Set(readIds) };
   listeners.forEach((l) => l());
 };
-
+const getSnap = () => snap;
 const persist = () => {
   try {
     storage
-      ?.setItem(KEY, JSON.stringify({ baseline, ids: Array.from(readIds) }))
+      ?.setItem(
+        KEY,
+        JSON.stringify({
+          baseline,
+          ids: Array.from(readIds).slice(-MAX_SAVED),
+        }),
+      )
       .catch(() => {});
   } catch {}
 };
-
 export async function hydrateNotifications() {
   try {
     const raw = await storage?.getItem(KEY);
@@ -159,9 +178,13 @@ export async function hydrateNotifications() {
       readIds.clear();
       (p.ids ?? []).forEach((id: string) => readIds.add(id));
     } else {
-      persist(); // pehli baar: baseline save kar do
+      persist(); // pehli baar
     }
-  } catch {}
+    hydrated = true;
+  } catch {
+    hydrated = true;
+    storage = null; // storage kharab hai, overwrite na karo
+  }
   emit();
 }
 hydrateNotifications();
@@ -174,8 +197,9 @@ const subscribe = (l: () => void) => {
 };
 const getVersion = () => version;
 
+// saved state load hone se pehle unread nahi ginte (badge flash na ho)
 export const isUnread = (n: Notif) =>
-  !readIds.has(n.id) && n.time.getTime() > baseline;
+  hydrated && !readIds.has(n.id) && n.time.getTime() > baseline;
 
 export function markRead(id: string) {
   if (!readIds.has(id)) {
@@ -185,9 +209,9 @@ export function markRead(id: string) {
   }
 }
 
-export function markAllRead() {
-  baseline = Date.now();
-  readIds.clear();
+export function markAllRead(list?: Notif[]) {
+  const src = Array.isArray(list) ? list : build(getCache());
+  src.forEach((n) => readIds.add(n.id));
   persist();
   emit();
 }
@@ -202,16 +226,23 @@ export function clearNotifications() {
   emit();
 }
 
-/* ---------------- hook ---------------- */
 export function useNotifications(items?: any[] | null) {
-  useSyncExternalStore(subscribe, getVersion, getVersion);
+  const rs = useSyncExternalStore(subscribe, getSnap, getSnap);
   const cacheVer = useSyncExternalStore(
     subscribeCache,
     getCacheVersion,
     getCacheVersion,
   );
   const source = items && items.length ? items : getCache();
-  const list = useMemo(() => build(source), [source, cacheVer]);
-  const unread = list.filter(isUnread).length;
+  const list = useMemo(
+    () =>
+      build(source).map((n) => ({
+        ...n,
+        unread:
+          rs.hydrated && !rs.ids.has(n.id) && n.time.getTime() > rs.baseline,
+      })),
+    [source, cacheVer, rs],
+  );
+  const unread = useMemo(() => list.filter((n) => n.unread).length, [list]);
   return { list, unread };
 }

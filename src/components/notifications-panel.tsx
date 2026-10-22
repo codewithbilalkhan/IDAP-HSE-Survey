@@ -16,12 +16,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { C } from "@/constants/theme";
-import {
-    isUnread,
-    markAllRead,
-    markRead,
-    type Notif,
-} from "@/lib/notifications";
+import { markAllRead, markRead, type Notif } from "@/lib/notifications";
 
 const WIDTH = Math.min(Dimensions.get("window").width * 0.88, 390);
 const DAY = 86400000;
@@ -232,7 +227,7 @@ export function NotificationsPanel({
 
   if (!mounted) return null;
 
-  const unreadList = notifications.filter(isUnread);
+  const unreadList = notifications.filter((n) => n.unread);
   const unreadCount = unreadList.length;
   const list = filter === "unread" ? unreadList : notifications;
   const groups = GROUPS.map((g) => ({
@@ -316,7 +311,7 @@ export function NotificationsPanel({
 
             {unreadCount > 0 && (
               <Pressable
-                onPress={markAllRead}
+                onPress={() => markAllRead(notifications)}
                 hitSlop={8}
                 style={({ pressed }) => [
                   s.markAll,
@@ -398,7 +393,7 @@ export function NotificationsPanel({
                         key={n.id}
                         n={n}
                         i={idx++}
-                        unread={isUnread(n)}
+                        unread={!!n.unread}
                         onPress={() => open(n)}
                       />
                     ))}

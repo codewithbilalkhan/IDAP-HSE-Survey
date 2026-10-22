@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -79,6 +80,7 @@ export function AppHeader({
   items?: any[] | null;
 }) {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [now, setNow] = useState(new Date());
   const [notifOpen, setNotifOpen] = useState(false);
   const { list: notifs, unread } = useNotifications(items);
@@ -158,7 +160,12 @@ export function AppHeader({
             />
           </View>
 
-          <View style={s.brandWrap}>
+          {/* brand par tap karne se home (index) page khulta hai */}
+          <Pressable
+            onPress={() => router.navigate("/" as any)}
+            hitSlop={8}
+            style={({ pressed }) => [s.brandWrap, pressed && { opacity: 0.7 }]}
+          >
             <View style={s.brandDivider} />
             <View>
               {BRAND.map((b, i) => (
@@ -184,7 +191,7 @@ export function AppHeader({
                 </Animated.View>
               ))}
             </View>
-          </View>
+          </Pressable>
         </View>
 
         <View style={s.right}>
