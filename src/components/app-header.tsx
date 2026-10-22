@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Animated,
+  Easing,
   Image,
   Pressable,
   StyleSheet,
@@ -9,10 +10,13 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { NotificationBell } from "@/components/notification-bell";
+import { NotificationsPanel } from "@/components/notifications-panel";
 import { FIELDS, getField } from "@/constants/fields";
 import { C } from "@/constants/theme";
 import type { Profile } from "@/hooks/useProfile";
 import { useLastSurvey } from "@/lib/last-survey";
+import { useNotifications } from "@/lib/notifications";
 import { getCache } from "@/lib/survey-cache";
 
 const MONTHS = [
@@ -29,11 +33,21 @@ const MONTHS = [
   "Nov",
   "Dec",
 ];
-const DAY = 86400000;
+
+// Health Safety Environment: pehla harf gold + glow, baqi halka
+const BRAND = [
+  { init: "H", rest: "EALTH" },
+  { init: "S", rest: "AFETY" },
+  { init: "E", rest: "NVIRONMENT" },
+];
 
 // Last known profile, shared by every header instance so screens
 // don't flash "Welcome" while the profile reloads.
 let cachedProfile: Profile | null = null;
+
+// Brand reveal animation sirf app ke pehle header par chalti hai,
+// har screen par dobara nahi.
+let introPlayed = false;
 
 // Call this on sign out so the next user doesn't see the old name.
 export function clearHeaderProfile() {
@@ -64,6 +78,8 @@ export function AppHeader({
 }) {
   const insets = useSafeAreaInsets();
   const [now, setNow] = useState(new Date());
+  const [notifOpen, setNotifOpen] = useState(false);
+  const { list: notifs, unread } = useNotifications();
 
   // remember the latest real profile, fall back to it while a new screen loads
   if (profileProp) cachedProfile = profileProp;
@@ -81,6 +97,27 @@ export function AppHeader({
     loop.start();
     return () => loop.stop();
   }, [pulse]);
+
+  // brand lines: staggered slide-in (sirf pehli baar)
+  const played = useRef(introPlayed);
+  const reveal = useRef(
+    BRAND.map(() => new Animated.Value(played.current ? 1 : 0)),
+  ).current;
+  useEffect(() => {
+    if (played.current) return;
+    introPlayed = true;
+    Animated.stagger(
+      130,
+      reveal.map((v) =>
+        Animated.timing(v, {
+          toValue: 1,
+          duration: 560,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ),
+    ).start();
+  }, [reveal]);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 20000);
@@ -105,32 +142,63 @@ export function AppHeader({
       <View style={s.glowB} />
 
       <View style={s.row}>
-        <Pressable onPress={onMenuPress} hitSlop={12} style={s.menu}>
-          <View style={s.bar} />
-          <View style={[s.bar, { width: 11, backgroundColor: C.orange }]} />
-        </Pressable>
+        <View style={s.left}>
+          <Pressable onPress={onMenuPress} hitSlop={12} style={s.menu}>
+            <View style={s.bar} />
+            <View style={[s.bar, { width: 11, backgroundColor: C.orange }]} />
+          </Pressable>
 
-        <View style={s.logoBox}>
-          <Image
-            source={require("@/assets/images/idap_building_only_logo.png")}
-            style={s.logo}
-            resizeMode="contain"
-          />
-        </View>
+          <View style={s.logoBox}>
+            <Image
+              source={require("@/assets/images/idap_building_only_logo.png")}
+              style={s.logo}
+              resizeMode="contain"
+            />
+          </View>
 
-        <View style={s.brandWrap}>
-          <View style={s.brandDot} />
-          <Text style={s.brand}>HSE</Text>
-        </View>
-
-        <View style={s.ring}>
-          {profile?.photo ? (
-            <Image source={{ uri: profile.photo }} style={s.avatar} />
-          ) : (
-            <View style={[s.avatar, s.fallback]}>
-              <Text style={s.fallbackText}>{name.charAt(0).toUpperCase()}</Text>
+          <View style={s.brandWrap}>
+            <View style={s.brandDivider} />
+            <View>
+              {BRAND.map((b, i) => (
+                <Animated.View
+                  key={b.init}
+                  style={[
+                    s.brandLine,
+                    {
+                      opacity: reveal[i],
+                      transform: [
+                        {
+                          translateX: reveal[i].interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [-14, 0],
+                          }),
+                        },
+                      ],
+                    },
+                  ]}
+                >
+                  <Text style={s.brandInit}>{b.init}</Text>
+                  <Text style={s.brandRest}>{b.rest}</Text>
+                </Animated.View>
+              ))}
             </View>
-          )}
+          </View>
+        </View>
+
+        <View style={s.right}>
+          <NotificationBell count={unread} onPress={() => setNotifOpen(true)} />
+
+          <View style={s.ring}>
+            {profile?.photo ? (
+              <Image source={{ uri: profile.photo }} style={s.avatar} />
+            ) : (
+              <View style={[s.avatar, s.fallback]}>
+                <Text style={s.fallbackText}>
+                  {name.charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
       </View>
 
@@ -178,6 +246,12 @@ export function AppHeader({
           </View>
         )}
       </View>
+
+      <NotificationsPanel
+        visible={notifOpen}
+        onClose={() => setNotifOpen(false)}
+        notifications={notifs}
+      />
     </View>
   );
 }
@@ -216,6 +290,17 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
+  left: {
+    flexShrink: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  right: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   menu: {
     width: 42,
     height: 42,
@@ -228,14 +313,42 @@ const s = StyleSheet.create({
     gap: 5,
   },
   bar: { width: 18, height: 2, borderRadius: 1, backgroundColor: "#fff" },
-  brandWrap: { flexDirection: "row", alignItems: "center", gap: 8 },
-  brandDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.orange },
-  brand: {
-    color: "#fff",
-    fontSize: 13,
-    fontWeight: "800",
-    letterSpacing: 6,
+
+  brandWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+    marginLeft: 4,
   },
+  brandDivider: {
+    width: 2,
+    height: 34,
+    borderRadius: 1,
+    backgroundColor: C.orange,
+    opacity: 0.85,
+  },
+  brandLine: {
+    flexDirection: "row",
+    alignItems: "baseline",
+  },
+  brandInit: {
+    color: C.orange,
+    fontSize: 14,
+    fontWeight: "900",
+    lineHeight: 14,
+    letterSpacing: 0.5,
+    textShadowColor: "rgba(249,162,30,0.75)",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+  },
+  brandRest: {
+    color: "rgba(255,255,255,0.82)",
+    fontSize: 9,
+    fontWeight: "700",
+    lineHeight: 14,
+    letterSpacing: 2,
+  },
+
   ring: {
     width: 42,
     height: 42,
@@ -318,9 +431,6 @@ const s = StyleSheet.create({
   date: { color: C.orange, fontSize: 12, fontWeight: "600" },
 
   logoBox: {
-    position: "absolute",
-    left: 52,
-    top: 0,
     width: 42,
     height: 42,
     borderRadius: 14,
