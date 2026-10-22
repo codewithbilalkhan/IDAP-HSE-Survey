@@ -71,15 +71,17 @@ export function AppHeader({
   profile: profileProp,
   onMenuPress,
   lastSurvey: lastSurveyProp = null,
+  items = null,
 }: {
   profile: Profile | null;
   onMenuPress: () => void;
   lastSurvey?: Date | null;
+  items?: any[] | null;
 }) {
   const insets = useSafeAreaInsets();
   const [now, setNow] = useState(new Date());
   const [notifOpen, setNotifOpen] = useState(false);
-  const { list: notifs, unread } = useNotifications();
+  const { list: notifs, unread } = useNotifications(items);
 
   // remember the latest real profile, fall back to it while a new screen loads
   if (profileProp) cachedProfile = profileProp;

@@ -1,11 +1,26 @@
 // lib/notifications.ts
 // Notifications survey data se bante hain (naya survey + low score alert).
-// Read/unread state abhi memory mein hai (app band hone par reset).
+// Read/unread state AsyncStorage mein save hoti hai (agar native module maujood ho).
 import { useMemo, useSyncExternalStore } from "react";
 
 import { FIELDS, getField } from "@/constants/fields";
 import { siteDetail } from "@/lib/hse-kpis";
-import { getCache } from "@/lib/survey-cache";
+import { getCache, getCacheVersion, subscribeCache } from "@/lib/survey-cache";
+
+/* ---------------- safe storage ---------------- */
+type Store = {
+  getItem: (k: string) => Promise<string | null>;
+  setItem: (k: string, v: string) => Promise<void>;
+  removeItem: (k: string) => Promise<void>;
+};
+
+let storage: Store | null = null;
+try {
+  // native module na ho to require throw karta hai, app crash nahi hogi
+  storage = require("@react-native-async-storage/async-storage").default;
+} catch {
+  storage = null; // read state sirf memory mein rahegi
+}
 
 export type NotifKind = "alert" | "survey";
 export type Notif = {
@@ -116,6 +131,7 @@ function build(items: any[] | null | undefined): Notif[] {
 }
 
 /* ---------------- read state (tiny store) ---------------- */
+const KEY = "notif-read-state-v1";
 const listeners = new Set<() => void>();
 let version = 0;
 let baseline = Date.now() - UNREAD_WINDOW;
@@ -125,6 +141,31 @@ const emit = () => {
   version++;
   listeners.forEach((l) => l());
 };
+
+const persist = () => {
+  try {
+    storage
+      ?.setItem(KEY, JSON.stringify({ baseline, ids: Array.from(readIds) }))
+      .catch(() => {});
+  } catch {}
+};
+
+export async function hydrateNotifications() {
+  try {
+    const raw = await storage?.getItem(KEY);
+    if (raw) {
+      const p = JSON.parse(raw);
+      if (typeof p.baseline === "number") baseline = p.baseline;
+      readIds.clear();
+      (p.ids ?? []).forEach((id: string) => readIds.add(id));
+    } else {
+      persist(); // pehli baar: baseline save kar do
+    }
+  } catch {}
+  emit();
+}
+hydrateNotifications();
+
 const subscribe = (l: () => void) => {
   listeners.add(l);
   return () => {
@@ -139,6 +180,7 @@ export const isUnread = (n: Notif) =>
 export function markRead(id: string) {
   if (!readIds.has(id)) {
     readIds.add(id);
+    persist();
     emit();
   }
 }
@@ -146,6 +188,7 @@ export function markRead(id: string) {
 export function markAllRead() {
   baseline = Date.now();
   readIds.clear();
+  persist();
   emit();
 }
 
@@ -153,14 +196,22 @@ export function markAllRead() {
 export function clearNotifications() {
   baseline = Date.now() - UNREAD_WINDOW;
   readIds.clear();
+  try {
+    storage?.removeItem(KEY).catch(() => {});
+  } catch {}
   emit();
 }
 
 /* ---------------- hook ---------------- */
-export function useNotifications() {
+export function useNotifications(items?: any[] | null) {
   useSyncExternalStore(subscribe, getVersion, getVersion);
-  const cache = getCache();
-  const list = useMemo(() => build(cache), [cache]);
+  const cacheVer = useSyncExternalStore(
+    subscribeCache,
+    getCacheVersion,
+    getCacheVersion,
+  );
+  const source = items && items.length ? items : getCache();
+  const list = useMemo(() => build(source), [source, cacheVer]);
   const unread = list.filter(isUnread).length;
   return { list, unread };
 }

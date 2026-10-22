@@ -247,6 +247,7 @@ export default function Index() {
           profile={profile}
           onMenuPress={openMenu}
           lastSurvey={lastSurvey}
+          items={items}
         />
 
         <View style={s.body}>
