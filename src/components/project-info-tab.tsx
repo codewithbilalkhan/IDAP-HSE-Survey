@@ -556,9 +556,6 @@ export function ProjectInfoTab({
                     {p.email}
                   </Text>
                 </View>
-                <View style={s.mailBtn}>
-                  <Ionicons name="mail-outline" size={15} color={GOLD} />
-                </View>
               </View>
             </Rise>
           ))}

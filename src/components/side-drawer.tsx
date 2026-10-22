@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
 import {
   Animated,
@@ -31,10 +31,21 @@ const ITEMS: Item[] = [
   { key: "mine", label: "Information", icon: "information-circle-outline" },
   { key: "settings", label: "Monthly Analytics", icon: "stats-chart-outline" },
 ];
+
+// Last known profile, shared by every drawer instance so screens
+// don't flash "User" / empty photo while the profile reloads.
+let cachedProfile: Profile | null = null;
+
+// Call this on sign out (next to clearHeaderProfile) so the next
+// user doesn't see the old name, email or photo.
+export function clearDrawerProfile() {
+  cachedProfile = null;
+}
+
 export function SideDrawer({
   open,
   onClose,
-  profile,
+  profile: profileProp,
   onSignOut,
 }: {
   open: boolean;
@@ -44,11 +55,28 @@ export function SideDrawer({
 }) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const pathname = usePathname();
+
+  // remember the latest real profile, fall back to it while a new screen loads
+  if (profileProp) cachedProfile = profileProp;
+  const profile = profileProp ?? cachedProfile;
+
+  // /site ek project ka detail hai, isliye Project Sites highlight rahe.
+  // /project-info ko /projects se pehle check karna zaroori hai.
+  const active = pathname.startsWith("/project-info")
+    ? 2
+    : pathname.startsWith("/monthly-analytics")
+      ? 3
+      : pathname.startsWith("/projects") || pathname.startsWith("/site")
+        ? 1
+        : 0;
 
   const go = (key: string) => {
     onClose();
-    if (key === "home") router.replace("/");
-    if (key === "new") router.push("/projects" as any);
+    if (key === "home") router.navigate("/" as any);
+    if (key === "new") router.navigate("/projects" as any);
+    if (key === "mine") router.navigate("/project-info" as any);
+    if (key === "settings") router.navigate("/monthly-analytics" as any);
   };
   const anim = useRef(new Animated.Value(0)).current;
 
@@ -125,7 +153,7 @@ export function SideDrawer({
               onPress={() => go(it.key)}
               style={({ pressed }) => [
                 s.item,
-                i === 0 && s.itemActive,
+                i === active && s.itemActive,
                 pressed && { opacity: 0.7 },
               ]}
             >
@@ -133,10 +161,10 @@ export function SideDrawer({
                 <Ionicons
                   name={it.icon}
                   size={20}
-                  color={i === 0 ? ORANGE : "#8E8E93"}
+                  color={i === active ? ORANGE : "#8E8E93"}
                 />
               </View>
-              <Text style={[s.label, i === 0 && { color: "#fff" }]}>
+              <Text style={[s.label, i === active && { color: "#fff" }]}>
                 {it.label}
               </Text>
             </Pressable>

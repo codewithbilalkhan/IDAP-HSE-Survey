@@ -43,19 +43,6 @@ export function clearHeaderProfile() {
 const fmtDate = (d: Date) =>
   `${String(d.getDate()).padStart(2, "0")} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 
-const ago = (d: Date) => {
-  const days = Math.floor((Date.now() - d.getTime()) / DAY);
-  if (days <= 0) return "Today";
-  if (days === 1) return "Yesterday";
-  if (days < 30) return `${days} days ago`;
-  if (days < 365) {
-    const m = Math.floor(days / 30);
-    return `${m} ${m === 1 ? "month" : "months"} ago`;
-  }
-  const y = Math.floor(days / 365);
-  return `${y} ${y === 1 ? "year" : "years"} ago`;
-};
-
 const latestFrom = (items: any[] | null | undefined): Date | null => {
   let best: Date | null = null;
   for (const it of items ?? []) {
@@ -188,7 +175,6 @@ export function AppHeader({
               <Text style={s.chipEyebrow}>LAST SURVEY</Text>
             </View>
             <Text style={s.chipDate}>{fmtDate(lastSurvey)}</Text>
-            <Text style={s.chipAgo}>{ago(lastSurvey)}</Text>
           </View>
         )}
       </View>
@@ -319,12 +305,6 @@ const s = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: -0.3,
     marginTop: 5,
-  },
-  chipAgo: {
-    color: C.orange,
-    fontSize: 10.5,
-    fontWeight: "700",
-    marginTop: 1,
   },
 
   datePill: {

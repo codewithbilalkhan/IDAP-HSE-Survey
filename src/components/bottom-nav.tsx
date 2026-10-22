@@ -32,9 +32,11 @@ const TABS = [
 const indexFor = (p: string) =>
   p.startsWith("/project-info")
     ? 2
-    : p.startsWith("/projects") || p.startsWith("/site")
-      ? 1
-      : 0;
+    : p.startsWith("/monthly-analytics")
+      ? 3
+      : p.startsWith("/projects") || p.startsWith("/site")
+        ? 1
+        : 0;
 
 export const NAV_HEIGHT = 66;
 // total space the floating nav takes from the bottom of the screen
