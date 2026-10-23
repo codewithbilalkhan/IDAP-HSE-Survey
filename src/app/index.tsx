@@ -1,3 +1,4 @@
+import { AccessDenied } from "@/components/access-denied";
 import { AppHeader } from "@/components/app-header";
 import { BottomNav, navSpace } from "@/components/bottom-nav";
 import { KpiGrid } from "@/components/kpi-grid";
@@ -59,13 +60,14 @@ const sigOf = (d: any[]) =>
 export default function Index() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { accessToken, signIn, signOut, ready } = useMicrosoftAuth();
+  const { accessToken, signIn, signOut, ready, restoring } = useMicrosoftAuth();
   const profile = useProfile(accessToken);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [denied, setDenied] = useState(false);
   const [firstLoaded, setFirstLoaded] = useState(false);
 
   const listRef = useRef<ScrollView>(null);
@@ -92,12 +94,15 @@ export default function Index() {
     setLoading(true);
     setError("");
     try {
+      setDenied(false);
       const data = await getSurveyItems(accessToken);
       lastSig.current = sigOf(data);
       setCache(data);
       setItems(data);
     } catch (e: any) {
-      setError(e.message);
+      if (e?.status === 403 || e?.status === 401 || e?.status === 404)
+        setDenied(true);
+      else setError(e.message);
     } finally {
       setLoading(false);
       setFirstLoaded(true);
@@ -160,6 +165,10 @@ export default function Index() {
   useEffect(() => {
     if (lastSurvey) setLastSurvey(lastSurvey);
   }, [lastSurvey]);
+
+  if (restoring && !accessToken) {
+    return <View style={{ flex: 1, backgroundColor: C.bg }} />;
+  }
 
   if (!accessToken) {
     return (
@@ -236,6 +245,12 @@ export default function Index() {
           <Text style={s.footer}>Only idap.pk accounts are supported</Text>
         </Animated.View>
       </View>
+    );
+  }
+
+  if (denied) {
+    return (
+      <AccessDenied email={profile?.email} onSignOut={signOut} onRetry={load} />
     );
   }
 

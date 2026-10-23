@@ -13,7 +13,12 @@ async function graph(token: string, path: string, init: RequestInit = {}) {
       ...(init.headers || {}),
     },
   });
-  if (!res.ok) throw new Error(`Graph ${res.status}: ${await res.text()}`);
+  if (!res.ok) {
+    const err: any = new Error(`Graph ${res.status}`);
+    err.status = res.status;
+    err.body = await res.text();
+    throw err;
+  }
   return res.status === 204 ? null : res.json();
 }
 
