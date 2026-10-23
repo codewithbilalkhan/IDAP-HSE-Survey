@@ -52,8 +52,11 @@ export function AnimatedSplash({ children }: { children: React.ReactNode }) {
 
       {!done && (
         <Animated.View style={[styles.splash, { opacity: overlay }]}>
-          <View style={styles.circleA} />
-          <View style={styles.circleB} />
+          <Image
+            source={require("@/assets/images/splash-bg.png")}
+            style={StyleSheet.absoluteFill}
+            resizeMode="cover"
+          />
 
           <Animated.View
             style={{
@@ -75,7 +78,7 @@ export function AnimatedSplash({ children }: { children: React.ReactNode }) {
             }}
           >
             <Image
-              source={require("../../assets/images/idaplogo.png")}
+              source={require("@/assets/images/idaplogo.png")}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -126,11 +129,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#FFF9EF",
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
   },
+
   circleA: {
     position: "absolute",
     width: 420,

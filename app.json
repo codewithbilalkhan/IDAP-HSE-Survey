@@ -11,7 +11,7 @@
       "package": "com.idap.hsesurvey",
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
-        "foregroundImage": "./assets/images/HSE_icon.png"
+        "foregroundImage": "./assets/images/IDAPHSElogo.png"
       },
       "predictiveBackGestureEnabled": false
     },
@@ -22,8 +22,8 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#FFFFFF",
-          "image": "./assets/images/idaplogo.png",
-          "imageWidth": 200
+          "image": "./assets/images/IDAPHSElogo.png",
+          "imageWidth": 100
         }
       ],
       "expo-web-browser",
