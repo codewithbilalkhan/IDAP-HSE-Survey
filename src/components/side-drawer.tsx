@@ -25,7 +25,7 @@ type Item = {
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
   route: string;
-  // kon se paths par yeh item highlight rahe
+
   match: (path: string) => boolean;
 };
 
@@ -56,8 +56,7 @@ const ITEMS: Item[] = [
     key: "surveyors",
     label: "Surveyors",
     icon: "people-outline",
-    // /respondent ek surveyor ka detail hai (email param chahiye),
-    // list /team par hai, isliye drawer /team kholta hai
+
     route: "/team",
     match: (p) => p.startsWith("/team") || p.startsWith("/respondent"),
   },
@@ -106,7 +105,6 @@ export function SideDrawer({
   if (profileProp) cachedProfile = profileProp;
   const profile = profileProp ?? cachedProfile;
 
-  // koi match na mile to Dashboard highlight rahe
   const active = Math.max(
     0,
     ITEMS.findIndex((it) => it.match(pathname)),

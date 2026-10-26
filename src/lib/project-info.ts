@@ -1,6 +1,3 @@
-// lib/project-info.ts
-// SharePoint list "HSE Project Dates" se project ki info laata hai.
-
 const SITE_URL = "https://idappk.sharepoint.com/sites/DummyProjects";
 const LIST_TITLE = "HSE Project Dates";
 
@@ -20,7 +17,6 @@ const norm = (s: string) =>
     .replace(/[^a-z0-9]/gi, "")
     .toLowerCase();
 
-/** Choice, Person, Lookup, plain text — sab ko string bana deta hai */
 const txt = (v: any): string => {
   if (v == null) return "";
   if (typeof v === "string") return v.trim();
@@ -74,8 +70,6 @@ export async function fetchProjectInfo(
   const target = norm(site);
   const rows = cache ?? [];
 
-  // Is list ke columns ke internal naam field_1..field_7 hain (Title khali).
-  // Isliye site ko row ki kisi bhi text value mein dhoondte hain.
   let row: any = null;
   let siteKey = "";
   for (const r of rows) {
@@ -104,8 +98,6 @@ export async function fetchProjectInfo(
     );
   }
 
-  // List ki order: Project Site, Site Short, Start, Completion, Director, Consultant, Contractor
-  // Site wale column se aage ke columns offset se uthate hain.
   const m = /^field_(\d+)$/.exec(siteKey);
   const at = (offset: number) =>
     m ? row[`field_${Number(m[1]) + offset}`] : undefined;

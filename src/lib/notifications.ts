@@ -1,6 +1,3 @@
-// lib/notifications.ts
-// Notifications survey data se bante hain (naya survey + low score alert).
-// Read/unread state AsyncStorage mein save hoti hai (agar native module maujood ho).
 import { useMemo, useSyncExternalStore } from "react";
 
 import { FIELDS, getField } from "@/constants/fields";
@@ -21,10 +18,10 @@ try {
   try {
     storage = require("@react-native-async-storage/async-storage").default;
   } catch {
-    storage = null; // read state sirf memory mein rahegi
+    storage = null;
   }
 }
-// check karne ke liye uncomment karo:
+
 console.log("storage available:", !!storage);
 
 export type NotifKind = "alert" | "survey";
@@ -35,7 +32,7 @@ export type Notif = {
   body: string;
   site: string;
   who: string;
-  score: number; // 0 = score available nahi
+  score: number;
   level: string;
   time: Date;
   unread?: boolean;
@@ -43,7 +40,7 @@ export type Notif = {
 
 const DAY = 86400000;
 const MAX = 40;
-const UNREAD_WINDOW = 2 * DAY; // pehli baar: pichle 2 din ke surveys unread
+const UNREAD_WINDOW = 2 * DAY;
 
 /* ---------------- helpers ---------------- */
 const siteOf = (i: any) => getField(i, FIELDS.projectSite);
@@ -55,7 +52,6 @@ const dateOf = (it: any): Date | null => {
   return isNaN(d.getTime()) ? null : d;
 };
 
-// "Respondent" column ka internal name Title hai
 const respondentOf = (item: any): string => {
   const f = item?.fields ?? item ?? {};
   const t = String(f.Title ?? "").trim();
@@ -178,12 +174,12 @@ export async function hydrateNotifications() {
       readIds.clear();
       (p.ids ?? []).forEach((id: string) => readIds.add(id));
     } else {
-      persist(); // pehli baar
+      persist();
     }
     hydrated = true;
   } catch {
     hydrated = true;
-    storage = null; // storage kharab hai, overwrite na karo
+    storage = null;
   }
   emit();
 }
@@ -197,7 +193,6 @@ const subscribe = (l: () => void) => {
 };
 const getVersion = () => version;
 
-// saved state load hone se pehle unread nahi ginte (badge flash na ho)
 export const isUnread = (n: Notif) =>
   hydrated && !readIds.has(n.id) && n.time.getTime() > baseline;
 
@@ -216,7 +211,6 @@ export function markAllRead(list?: Notif[]) {
   emit();
 }
 
-// Sign out par call karo (clearHeaderProfile ke saath)
 export function clearNotifications() {
   baseline = Date.now() - UNREAD_WINDOW;
   readIds.clear();

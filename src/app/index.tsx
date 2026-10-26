@@ -51,7 +51,6 @@ function MicrosoftLogo() {
   );
 }
 
-// data ka signature: sirf tab update karo jab kuch badla ho
 const sigOf = (d: any[]) =>
   d.length +
   "|" +
@@ -88,7 +87,6 @@ export default function Index() {
     }).start();
   }, [enter]);
 
-  // pull-to-refresh aur pehli load (spinner ke saath)
   const load = useCallback(async () => {
     if (!accessToken) return;
     setLoading(true);
@@ -109,7 +107,6 @@ export default function Index() {
     }
   }, [accessToken]);
 
-  // silent auto-sync (spinner nahi, sirf naya data aaye to update)
   const sync = useCallback(async () => {
     if (!accessToken) return;
     try {
@@ -138,7 +135,7 @@ export default function Index() {
       setItems(cached);
       setFirstLoaded(true);
       lastSig.current = sigOf(cached);
-      sync(); // cache dikha do, aur peeche se taaza data le aao
+      sync();
     } else {
       load();
     }
@@ -146,9 +143,9 @@ export default function Index() {
 
   useEffect(() => {
     if (!accessToken) return;
-    const id = setInterval(sync, 60000); // har 60 second
+    const id = setInterval(sync, 60000);
     const sub = AppState.addEventListener("change", (st) => {
-      if (st === "active") sync(); // app wapas khulte hi
+      if (st === "active") sync();
     });
     return () => {
       clearInterval(id);

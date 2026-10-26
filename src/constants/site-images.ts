@@ -1,8 +1,5 @@
 import type { ImageSourcePropType } from "react-native";
 
-// Site ka naam bilkul wahi jo SharePoint mein hai (har harf, comma, space same).
-// Image ko assets/sites/ mein rakhein, phir us site ki line se // hata dein.
-// Jis site ki image nahi, uska gold monogram dikhega.
 export const SITE_IMAGES: Record<string, ImageSourcePropType> = {
   "UAEET Sambrial": require("../../assets/sites/UAEET , Sialkot.jpg"),
   "SFMKB, DG Khan": require("../../assets/sites/sfmkb.jpg"),

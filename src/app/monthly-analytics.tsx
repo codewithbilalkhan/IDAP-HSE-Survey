@@ -3,27 +3,27 @@ import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    Animated,
-    Easing,
-    Image,
-    LayoutAnimation,
-    Platform,
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    UIManager,
-    View,
+  Animated,
+  Easing,
+  Image,
+  LayoutAnimation,
+  Platform,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  UIManager,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, {
-    Circle,
-    Defs,
-    Line,
-    LinearGradient,
-    Rect,
-    Stop,
+  Circle,
+  Defs,
+  Line,
+  LinearGradient,
+  Rect,
+  Stop,
 } from "react-native-svg";
 
 import { AppHeader } from "@/components/app-header";
@@ -103,7 +103,6 @@ type Cat = { name: string; icon: string; score: number };
 
 const siteOf = (i: any) => getField(i, FIELDS.projectSite);
 
-// chart ke x-axis ke liye chhote naam (Power Apps colSiteShortNames)
 const SHORT_NAMES: Record<string, string> = {
   "200 Beds Accident & Emergency Center at PIMS, Islamabad": "PIMS",
   "Civil Secreteriat Multan": "Civil Multan",

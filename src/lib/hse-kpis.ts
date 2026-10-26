@@ -10,7 +10,6 @@ const RATING: Record<string, number> = {
 const range = (a: number, b: number) =>
   Array.from({ length: b - a + 1 }, (_, i) => a + i);
 
-// Power Apps ki 19 categories (question column numbers)
 const CATEGORIES: number[][] = [
   range(2, 10), // Housekeeping
   range(11, 19), // PPE
@@ -33,7 +32,6 @@ const CATEGORIES: number[][] = [
   range(127, 130), // Confined Space
 ];
 
-// SharePoint keys ko decode karta hai: "_x0031_0" -> "10"
 const decode = (k: string) =>
   k
     .replace(/_x([0-9a-fA-F]{4})_/g, (_, h) =>
@@ -62,7 +60,6 @@ function answer(f: Record<string, any>, n: number): string {
   return text(f[String(n)] ?? f[`field_${n}`]);
 }
 
-// Ek survey ka score (Power Apps: catSum / catCount)
 export function surveyScore(item: any): number {
   const f = flat(item);
   let sum = 0;
