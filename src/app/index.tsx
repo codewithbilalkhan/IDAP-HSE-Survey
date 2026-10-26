@@ -123,6 +123,15 @@ export default function Index() {
   }, [accessToken]);
 
   useEffect(() => {
+    if (!accessToken) {
+      setItems([]);
+      setDenied(false);
+      setFirstLoaded(false);
+      lastSig.current = "";
+    }
+  }, [accessToken]);
+
+  useEffect(() => {
     if (!accessToken) return;
     const cached = getCache();
     if (cached) {

@@ -404,7 +404,6 @@ function YearPicker({
 /* ---------------- month grid (sliding glow) ---------------- */
 const GAP = 8;
 const TILE_H = 54;
-
 function MonthGrid({
   month,
   counts,
@@ -417,16 +416,19 @@ function MonthGrid({
   onChange: (m: number) => void;
 }) {
   const [w, setW] = useState(0);
-  const tileW = w > 0 ? (w - GAP * 3) / 4 : 0;
+  const tileW = w > 0 ? Math.floor((w - GAP * 3) / 4) : 0;
   const hx = useRef(new Animated.Value(0)).current;
   const hy = useRef(new Animated.Value(0)).current;
   const placed = useRef(false);
 
+  const posOf = (i: number) => ({
+    x: (i % 4) * (tileW + GAP),
+    y: Math.floor(i / 4) * (TILE_H + GAP),
+  });
+
   useEffect(() => {
     if (!tileW) return;
-    const i = month - 1;
-    const x = (i % 4) * (tileW + GAP);
-    const y = Math.floor(i / 4) * (TILE_H + GAP);
+    const { x, y } = posOf(month - 1);
     if (!placed.current) {
       hx.setValue(x);
       hy.setValue(y);
@@ -447,6 +449,7 @@ function MonthGrid({
         tension: 110,
       }),
     ]).start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [month, tileW, hx, hy]);
 
   const cell = { width: tileW, height: TILE_H };
@@ -454,16 +457,24 @@ function MonthGrid({
   return (
     <View
       style={{ height: TILE_H * 3 + GAP * 2 }}
-      onLayout={(e) => setW(e.nativeEvent.layout.width)}
+      onLayout={(e) => setW(Math.floor(e.nativeEvent.layout.width))}
     >
       {tileW > 0 && (
         <>
           {/* layer 1: glass tiles */}
-          <View style={s.gridRow}>
-            {MONTHS.map((m, i) => (
-              <View key={m} style={[s.glassTile, cell]} />
-            ))}
-          </View>
+          {MONTHS.map((m, i) => {
+            const { x, y } = posOf(i);
+            return (
+              <View
+                key={m}
+                style={[
+                  s.glassTile,
+                  cell,
+                  { position: "absolute", left: x, top: y },
+                ]}
+              />
+            );
+          })}
 
           {/* layer 2: sliding highlight */}
           <Animated.View
@@ -476,27 +487,40 @@ function MonthGrid({
           />
 
           {/* layer 3: labels + touch */}
-          <View style={[StyleSheet.absoluteFill, s.gridRow]}>
-            {MONTHS.map((m, i) => {
-              const idx = i + 1;
-              const on = idx === month;
-              const off = idx > maxMonth;
-              const n = counts[i] ?? 0;
-              return (
-                <Pressable
-                  key={m}
-                  disabled={off}
-                  onPress={() => onChange(idx)}
-                  style={[cell, s.center, off && { opacity: 0.28 }]}
+          {MONTHS.map((m, i) => {
+            const idx = i + 1;
+            const on = idx === month;
+            const off = idx > maxMonth;
+            const n = counts[i] ?? 0;
+            const { x, y } = posOf(i);
+            return (
+              <Pressable
+                key={m}
+                disabled={off}
+                onPress={() => onChange(idx)}
+                style={[
+                  cell,
+                  s.center,
+                  { position: "absolute", left: x, top: y },
+                  off && { opacity: 0.28 },
+                ]}
+              >
+                <Text
+                  allowFontScaling={false}
+                  style={[s.monthText, on && s.monthTextOn]}
                 >
-                  <Text style={[s.monthText, on && s.monthTextOn]}>{m}</Text>
-                  <Text style={[s.monthCount, on && s.monthCountOn]}>
-                    {n > 0 ? `${n} ${n === 1 ? "survey" : "surveys"}` : "—"}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+                  {m}
+                </Text>
+                <Text
+                  allowFontScaling={false}
+                  numberOfLines={1}
+                  style={[s.monthCount, on && s.monthCountOn]}
+                >
+                  {n > 0 ? `${n} ${n === 1 ? "survey" : "surveys"}` : "—"}
+                </Text>
+              </Pressable>
+            );
+          })}
         </>
       )}
     </View>
@@ -1559,7 +1583,6 @@ const s = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
   },
   yearText: {
     color: "rgba(255,255,255,0.45)",

@@ -22,3 +22,8 @@ export const setCache = (items: any[]) => {
   cache = items;
   notifyCache();
 };
+
+export const clearCache = () => {
+  cache = null;
+  notifyCache();
+};

@@ -1,9 +1,9 @@
 import { AZURE } from "@/constants/azure";
+import { clearCache } from "@/lib/survey-cache";
 import * as AuthSession from "expo-auth-session";
 import * as SecureStore from "expo-secure-store";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useState } from "react";
-
 WebBrowser.maybeCompleteAuthSession();
 
 export const redirectUri = AuthSession.makeRedirectUri({
@@ -82,13 +82,12 @@ export function restoreSession() {
   }
   return restorePromise;
 }
-
 export function signOut() {
   if (timer) clearTimeout(timer);
   saveRefresh(null);
+  clearCache(); // <- add
   setToken(null);
 }
-
 export async function completeSignIn(code: string) {
   if (!pendingVerifier) throw new Error("Missing code verifier, sign in again");
   const discovery = await AuthSession.fetchDiscoveryAsync(issuer);
