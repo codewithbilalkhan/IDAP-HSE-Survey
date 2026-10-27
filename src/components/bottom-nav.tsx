@@ -11,7 +11,7 @@ type Tab = {
   label: string;
   path: string;
   icon: keyof typeof Ionicons.glyphMap;
-  // kon se paths par yeh tab highlight rahe
+
   match: (p: string) => boolean;
 };
 
@@ -26,7 +26,7 @@ const TABS: Tab[] = [
     label: "Projects",
     path: "/projects",
     icon: "business-outline",
-    // /site ek project ka detail hai, isliye Projects highlight rahe
+
     match: (p) => p.startsWith("/projects") || p.startsWith("/site"),
   },
   {
@@ -39,7 +39,7 @@ const TABS: Tab[] = [
     label: "Surveyors",
     path: "/team",
     icon: "people-outline",
-    // /respondent ek surveyor ka detail hai, isliye Surveyors highlight rahe
+
     match: (p) => p.startsWith("/team") || p.startsWith("/respondent"),
   },
   {
@@ -56,7 +56,6 @@ const TABS: Tab[] = [
   },
 ];
 
-// koi match na mile to Dashboard highlight rahe
 const indexFor = (p: string) =>
   Math.max(
     0,
