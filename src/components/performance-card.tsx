@@ -114,7 +114,7 @@ export function PerformanceCard({
     >
       <View style={s.head}>
         <View style={s.headBar} />
-        <Text style={s.title}>Overall Performances</Text>
+        <Text style={s.title}>Overall Performance</Text>
         <Text style={s.hint}>Tap to filter</Text>
       </View>
 

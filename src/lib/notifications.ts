@@ -45,13 +45,35 @@ const UNREAD_WINDOW = 2 * DAY;
 /* ---------------- helpers ---------------- */
 const siteOf = (i: any) => getField(i, FIELDS.projectSite);
 
+// SharePoint site ka timezone (list mein jo time dikhta hai)
+const SP_TZ = "America/Los_Angeles";
+
+const toSiteTime = (d: Date) => {
+  const p = new Intl.DateTimeFormat("en-US", {
+    timeZone: SP_TZ,
+    hour12: false,
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+  }).formatToParts(d);
+  const g = (t: string) => Number(p.find((x) => x.type === t)?.value);
+  return new Date(
+    g("year"),
+    g("month") - 1,
+    g("day"),
+    g("hour") % 24,
+    g("minute"),
+  );
+};
+
 const dateOf = (it: any): Date | null => {
   const raw = getField(it, FIELDS.submissionDate) || it?._created;
   if (!raw) return null;
   const d = new Date(raw);
-  return isNaN(d.getTime()) ? null : d;
+  return isNaN(d.getTime()) ? null : toSiteTime(d);
 };
-
 const respondentOf = (item: any): string => {
   const f = item?.fields ?? item ?? {};
   const t = String(f.Title ?? "").trim();
