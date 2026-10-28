@@ -45,7 +45,7 @@ const UNREAD_WINDOW = 2 * DAY;
 /* ---------------- helpers ---------------- */
 const siteOf = (i: any) => getField(i, FIELDS.projectSite);
 
-// SharePoint site ka timezone (list mein jo time dikhta hai)
+// SharePoint site timezone
 const SP_TZ = "America/Los_Angeles";
 
 const toSiteTime = (d: Date) => {
