@@ -1,7 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ComponentRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
 import {
   Animated,
   Easing,
@@ -187,7 +195,7 @@ export default function Projects() {
   const listRef = useRef<FlatList>(null);
   const [showTop, setShowTop] = useState(false);
 
-  const chipsRef = useRef<ScrollView>(null);
+  const chipsRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const chipX = useRef<Record<string, number>>({});
 
   useEffect(() => {

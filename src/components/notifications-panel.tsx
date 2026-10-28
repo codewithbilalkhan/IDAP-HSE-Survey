@@ -3,15 +3,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Dimensions,
-    Easing,
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Animated,
+  Dimensions,
+  Easing,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -57,19 +57,12 @@ const groupOf = (d: Date): (typeof GROUPS)[number] => {
 };
 
 const timeLabel = (d: Date) => {
-  const m = Math.floor((Date.now() - d.getTime()) / 60000);
-  if (m < 1) return "Just now";
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
   let hr = d.getHours();
   const ap = hr >= 12 ? "PM" : "AM";
   hr = hr % 12 || 12;
-  return `${d.getDate()} ${MONTHS[d.getMonth()]}, ${hr}:${String(
-    d.getMinutes(),
-  ).padStart(2, "0")} ${ap}`;
+  const time = `${hr}:${String(d.getMinutes()).padStart(2, "0")} ${ap}`;
+  return `${d.getDate()} ${MONTHS[d.getMonth()]}, ${time}`;
 };
-
 /* ---------------- card ---------------- */
 function NotifCard({
   n,

@@ -1,7 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ComponentRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Animated,
   Easing,
@@ -356,7 +363,7 @@ function YearPicker({
   value: number;
   onChange: (y: number) => void;
 }) {
-  const ref = useRef<ScrollView>(null);
+  const ref = useRef<ComponentRef<typeof ScrollView>>(null);
   const xs = useRef<Record<number, number>>({});
 
   useEffect(() => {
@@ -1055,7 +1062,7 @@ export default function MonthlyAnalytics() {
   const [month, setMonth] = useState(nowM);
   const [open, setOpen] = useState("");
   const [showCats, setShowCats] = useState(false);
-  const listRef = useRef<ScrollView>(null);
+  const listRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const [showTop, setShowTop] = useState(false);
 
   const load = useCallback(async () => {

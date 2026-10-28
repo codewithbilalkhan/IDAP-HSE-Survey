@@ -16,9 +16,17 @@ import { useProfile } from "@/hooks/useProfile";
 import { computeKpis } from "@/lib/hse-kpis";
 import { setLastSurvey } from "@/lib/last-survey";
 import { getCache, setCache } from "@/lib/survey-cache";
+
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ComponentRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Animated,
   AppState,
@@ -69,7 +77,7 @@ export default function Index() {
   const [denied, setDenied] = useState(false);
   const [firstLoaded, setFirstLoaded] = useState(false);
 
-  const listRef = useRef<ScrollView>(null);
+  const listRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const [showTop, setShowTop] = useState(false);
   const lastSig = useRef("");
 

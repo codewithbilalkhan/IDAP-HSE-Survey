@@ -1,16 +1,24 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    Animated,
-    Easing,
-    Image,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ComponentRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
+import {
+  Animated,
+  Easing,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -354,7 +362,7 @@ export default function RespondentDetail() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [items, setItems] = useState<any[]>(getCache() ?? []);
   const [sort, setSort] = useState<(typeof SORTS)[number]>("Recent");
-  const listRef = useRef<ScrollView>(null);
+  const listRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const [showTop, setShowTop] = useState(false);
 
   const load = useCallback(async () => {

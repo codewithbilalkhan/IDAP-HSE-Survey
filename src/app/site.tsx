@@ -5,7 +5,15 @@ import { fetchSitePhotos, type Photo } from "@/lib/attachments";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ComponentRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
 import {
   Animated,
   Easing,
@@ -336,7 +344,7 @@ export default function SiteDetail() {
   const [tab, setTab] = useState<(typeof TABS)[number]>("Overview");
   const [tabW, setTabW] = useState(0);
   const slide = useRef(new Animated.Value(0)).current;
-  const listRef = useRef<ScrollView>(null);
+  const listRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const [showTop, setShowTop] = useState(false);
 
   const [photos, setPhotos] = useState<Photo[]>([]);
