@@ -1,13 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
     Animated,
     Dimensions,
     Image,
+    Linking,
     Modal,
     PanResponder,
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     View,
@@ -19,55 +20,26 @@ import type { Profile } from "@/hooks/useProfile";
 
 const SCREEN_H = Dimensions.get("window").height;
 
-type Row = {
+type InfoRow = {
   key: string;
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
-  sub?: string;
-  route?: string;
+  value?: string;
+  href?: string;
 };
-
-// Apne routes yahan change kar lein
-const ROWS: Row[] = [
-  {
-    key: "profile",
-    icon: "person-outline",
-    label: "My Profile",
-    sub: "View & edit your details",
-    route: "/profile",
-  },
-  {
-    key: "settings",
-    icon: "settings-outline",
-    label: "Settings",
-    sub: "Preferences & security",
-    route: "/settings",
-  },
-  {
-    key: "help",
-    icon: "help-circle-outline",
-    label: "Help & Support",
-    sub: "FAQs and contact",
-    route: "/help",
-  },
-];
 
 export function ProfileSheet({
   visible,
   onClose,
   profile,
-  stats,
   onSignOut,
 }: {
   visible: boolean;
   onClose: () => void;
   profile: Profile | null;
-  /** optional quick stats, e.g. [{ label: "Surveys", value: 28 }] */
-  stats?: { label: string; value: string | number }[];
   onSignOut?: () => void;
 }) {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   const [mounted, setMounted] = useState(visible);
 
   const translateY = useRef(new Animated.Value(SCREEN_H)).current;
@@ -147,14 +119,62 @@ export function ProfileSheet({
   );
 
   const name = profile?.name || "Welcome";
-  const email = (profile as any)?.email as string | undefined;
-  const role = (profile as any)?.role as string | undefined;
 
-  const go = (route?: string) => {
-    if (!route) return;
-    onClose();
-    setTimeout(() => router.push(route as any), 260);
-  };
+  const allRows: InfoRow[] = [
+    {
+      key: "email",
+      icon: "mail-outline",
+      label: "Email",
+      value: profile?.email,
+      href: profile?.email ? `mailto:${profile.email}` : undefined,
+    },
+    {
+      key: "dept",
+      icon: "briefcase-outline",
+      label: "Department",
+      value: profile?.department,
+    },
+    {
+      key: "company",
+      icon: "business-outline",
+      label: "Company",
+      value: profile?.company,
+    },
+    {
+      key: "office",
+      icon: "location-outline",
+      label: "Office",
+      value: profile?.office || profile?.location,
+    },
+    {
+      key: "mobile",
+      icon: "phone-portrait-outline",
+      label: "Mobile",
+      value: profile?.mobile,
+      href: profile?.mobile ? `tel:${profile.mobile}` : undefined,
+    },
+    {
+      key: "phone",
+      icon: "call-outline",
+      label: "Office phone",
+      value: profile?.phone,
+      href: profile?.phone ? `tel:${profile.phone}` : undefined,
+    },
+    {
+      key: "empId",
+      icon: "id-card-outline",
+      label: "Employee ID",
+      value: profile?.employeeId,
+    },
+    {
+      key: "manager",
+      icon: "people-outline",
+      label: "Reports to",
+      value: profile?.manager,
+    },
+  ];
+
+  const rows = allRows.filter((r) => !!r.value);
 
   return (
     <Modal
@@ -203,58 +223,69 @@ export function ProfileSheet({
             <Text style={s.name} numberOfLines={1}>
               {name}
             </Text>
-            {!!email && (
-              <Text style={s.email} numberOfLines={1}>
-                {email}
-              </Text>
-            )}
-            {!!role && (
+            {!!profile?.jobTitle && (
               <View style={s.roleChip}>
-                <Text style={s.roleText}>{role}</Text>
+                <Text style={s.roleText} numberOfLines={1}>
+                  {profile.jobTitle}
+                </Text>
               </View>
             )}
           </View>
 
-          {/* stats */}
-          {!!stats?.length && (
-            <View style={s.statsRow}>
-              {stats.map((st) => (
-                <View key={st.label} style={s.stat}>
-                  <Text style={s.statValue}>{st.value}</Text>
-                  <Text style={s.statLabel}>{st.label}</Text>
-                </View>
-              ))}
-            </View>
-          )}
+          {/* info from Microsoft 365 */}
+          {rows.length > 0 && (
+            <ScrollView
+              style={s.scroll}
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+            >
+              <View style={s.card}>
+                {rows.map((r, i) => {
+                  const body = (
+                    <>
+                      <View style={s.iconBox}>
+                        <Ionicons name={r.icon} size={18} color={C.orange} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={s.rowLabel}>{r.label}</Text>
+                        <Text style={s.rowValue} numberOfLines={1}>
+                          {r.value}
+                        </Text>
+                      </View>
+                      {!!r.href && (
+                        <Ionicons
+                          name="open-outline"
+                          size={16}
+                          color="rgba(255,255,255,0.3)"
+                        />
+                      )}
+                    </>
+                  );
 
-          {/* menu */}
-          <View style={s.card}>
-            {ROWS.map((r, i) => (
-              <Pressable
-                key={r.key}
-                onPress={() => go(r.route)}
-                android_ripple={{ color: "rgba(255,255,255,0.06)" }}
-                style={({ pressed }) => [
-                  s.row,
-                  i > 0 && s.rowBorder,
-                  pressed && { backgroundColor: "rgba(255,255,255,0.05)" },
-                ]}
-              >
-                <View style={s.iconBox}>
-                  <Ionicons name={r.icon} size={19} color={C.orange} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={s.rowLabel}>{r.label}</Text>
-                  {!!r.sub && <Text style={s.rowSub}>{r.sub}</Text>}
-                </View>
-                <Ionicons
-                  name="chevron-forward"
-                  size={18}
-                  color="rgba(255,255,255,0.35)"
-                />
-              </Pressable>
-            ))}
-          </View>
+                  return r.href ? (
+                    <Pressable
+                      key={r.key}
+                      onPress={() => Linking.openURL(r.href!).catch(() => {})}
+                      android_ripple={{ color: "rgba(255,255,255,0.06)" }}
+                      style={({ pressed }) => [
+                        s.row,
+                        i > 0 && s.rowBorder,
+                        pressed && {
+                          backgroundColor: "rgba(255,255,255,0.05)",
+                        },
+                      ]}
+                    >
+                      {body}
+                    </Pressable>
+                  ) : (
+                    <View key={r.key} style={[s.row, i > 0 && s.rowBorder]}>
+                      {body}
+                    </View>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          )}
 
           {/* sign out */}
           {!!onSignOut && (
@@ -283,6 +314,7 @@ const s = StyleSheet.create({
   },
   sheet: {
     backgroundColor: C.dark,
+    maxHeight: SCREEN_H * 0.9,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: 20,
@@ -352,29 +384,17 @@ const s = StyleSheet.create({
     letterSpacing: -0.5,
     marginTop: 14,
   },
-  email: { color: C.grayLight, fontSize: 13, marginTop: 3 },
   roleChip: {
     marginTop: 10,
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 10,
     backgroundColor: "rgba(249,162,30,0.14)",
+    maxWidth: "100%",
   },
   roleText: { color: C.orange, fontSize: 12, fontWeight: "700" },
 
-  statsRow: { flexDirection: "row", gap: 10, marginBottom: 16 },
-  stat: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: 14,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.07)",
-  },
-  statValue: { color: "#fff", fontSize: 20, fontWeight: "800" },
-  statLabel: { color: C.grayLight, fontSize: 11, marginTop: 2 },
-
+  scroll: { flexGrow: 0, flexShrink: 1 },
   card: {
     borderRadius: 22,
     backgroundColor: "rgba(255,255,255,0.05)",
@@ -387,22 +407,27 @@ const s = StyleSheet.create({
     alignItems: "center",
     gap: 14,
     paddingHorizontal: 14,
-    paddingVertical: 14,
+    paddingVertical: 12,
   },
   rowBorder: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: "rgba(255,255,255,0.1)",
   },
   iconBox: {
-    width: 38,
-    height: 38,
+    width: 36,
+    height: 36,
     borderRadius: 12,
     backgroundColor: "rgba(249,162,30,0.12)",
     alignItems: "center",
     justifyContent: "center",
   },
-  rowLabel: { color: "#fff", fontSize: 15, fontWeight: "600" },
-  rowSub: { color: C.grayLight, fontSize: 12, marginTop: 1 },
+  rowLabel: {
+    color: C.grayLight,
+    fontSize: 11,
+    fontWeight: "600",
+    letterSpacing: 0.4,
+  },
+  rowValue: { color: "#fff", fontSize: 14.5, fontWeight: "600", marginTop: 2 },
 
   signOut: {
     marginTop: 14,
