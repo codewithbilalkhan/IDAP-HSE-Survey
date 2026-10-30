@@ -36,7 +36,6 @@ async function saveRefresh(r: string | null) {
   } catch {}
 }
 
-// access token ko expire hone se pehle khud naya kar do
 function scheduleRefresh(expiresIn?: number) {
   if (timer) clearTimeout(timer);
   const secs = Math.max(60, (expiresIn ?? 3600) - 300);
@@ -70,7 +69,6 @@ export function restoreSession() {
         refresh = saved;
         await refreshAccess();
       } catch (e: any) {
-        // token waqai invalid/expire ho to hata do, network error par rehne do
         const msg = String(e?.code ?? e?.name ?? e?.message ?? "");
         if (/invalid_grant|TokenError|AADSTS/i.test(msg)) {
           await saveRefresh(null);

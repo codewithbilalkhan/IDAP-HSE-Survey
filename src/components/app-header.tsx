@@ -14,8 +14,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NotificationBell } from "@/components/notification-bell";
 import { NotificationsPanel } from "@/components/notifications-panel";
 import { ProfileSheet } from "@/components/profile-sheet";
+// ⚠️ apni side drawer file ka sahi path/naam likhein
+import { clearDrawerProfile } from "@/components/side-drawer";
 import { FIELDS, getField } from "@/constants/fields";
 import { C } from "@/constants/theme";
+import { signOut } from "@/hooks/useMicrosoftAuth";
 import type { Profile } from "@/hooks/useProfile";
 import { useLastSurvey } from "@/lib/last-survey";
 import { useNotifications } from "@/lib/notifications";
@@ -216,6 +219,7 @@ export function AppHeader({
                 </Text>
               </View>
             )}
+            <View style={s.onlineDot} />
           </Pressable>
         </View>
       </View>
@@ -276,7 +280,9 @@ export function AppHeader({
         onClose={() => setProfileOpen(false)}
         profile={profile}
         onSignOut={() => {
-          // yahan apna sign out logic + clearHeaderProfile()
+          clearHeaderProfile();
+          clearDrawerProfile();
+          signOut();
         }}
       />
     </View>
@@ -385,6 +391,17 @@ const s = StyleSheet.create({
     padding: 2,
   },
   avatar: { width: "100%", height: "100%", borderRadius: 19 },
+  onlineDot: {
+    position: "absolute",
+    right: -2,
+    bottom: -2,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#2ecc71",
+    borderWidth: 2,
+    borderColor: C.dark,
+  },
   fallback: {
     backgroundColor: C.darkSoft,
     alignItems: "center",

@@ -54,7 +54,6 @@ export function useProfile(token: string | null) {
     (async () => {
       const headers = { Authorization: `Bearer ${token}` };
 
-      // teeno requests ek sath chalti hain, koi fail ho to baaqi par asar nahi
       const [me, manager, photo] = await Promise.all([
         fetch(`${GRAPH}/me?$select=${FIELDS}`, { headers })
           .then(async (r) => {

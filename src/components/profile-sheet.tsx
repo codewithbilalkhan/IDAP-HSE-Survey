@@ -41,6 +41,7 @@ export function ProfileSheet({
 }) {
   const insets = useSafeAreaInsets();
   const [mounted, setMounted] = useState(visible);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const translateY = useRef(new Animated.Value(SCREEN_H)).current;
   const backdrop = useRef(new Animated.Value(0)).current;
@@ -287,13 +288,10 @@ export function ProfileSheet({
             </ScrollView>
           )}
 
-          {/* sign out */}
+          {/* sign out: pehle confirm modal kholta hai */}
           {!!onSignOut && (
             <Pressable
-              onPress={() => {
-                onClose();
-                setTimeout(onSignOut, 260);
-              }}
+              onPress={() => setConfirmOpen(true)}
               style={({ pressed }) => [s.signOut, pressed && { opacity: 0.75 }]}
             >
               <Ionicons name="log-out-outline" size={19} color="#ff6b6b" />
@@ -301,6 +299,56 @@ export function ProfileSheet({
             </Pressable>
           )}
         </Animated.View>
+
+        {/* sign out confirmation */}
+        <Modal
+          visible={confirmOpen}
+          transparent
+          animationType="fade"
+          statusBarTranslucent
+          onRequestClose={() => setConfirmOpen(false)}
+        >
+          <View style={s.modalWrap}>
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onPress={() => setConfirmOpen(false)}
+            />
+            <View style={s.modalCard}>
+              <View style={s.modalIcon}>
+                <Ionicons name="log-out-outline" size={26} color={C.orange} />
+              </View>
+              <Text style={s.modalTitle}>Sign out?</Text>
+              <Text style={s.modalSub}>Are you sure you want to sign out?</Text>
+
+              <View style={s.modalBtns}>
+                <Pressable
+                  onPress={() => setConfirmOpen(false)}
+                  style={({ pressed }) => [
+                    s.btn,
+                    s.btnCancel,
+                    pressed && { opacity: 0.8 },
+                  ]}
+                >
+                  <Text style={s.btnCancelText}>Cancel</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    setConfirmOpen(false);
+                    onClose();
+                    setTimeout(() => onSignOut?.(), 260);
+                  }}
+                  style={({ pressed }) => [
+                    s.btn,
+                    s.btnYes,
+                    pressed && { opacity: 0.85 },
+                  ]}
+                >
+                  <Text style={s.btnYesText}>Yes, sign out</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     </Modal>
   );
@@ -442,4 +490,56 @@ const s = StyleSheet.create({
     borderColor: "rgba(255,107,107,0.28)",
   },
   signOutText: { color: "#ff6b6b", fontSize: 15, fontWeight: "700" },
+
+  /* confirm modal */
+  modalWrap: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 28,
+  },
+  modalCard: {
+    width: "100%",
+    maxWidth: 340,
+    backgroundColor: C.dark,
+    borderRadius: 28,
+    padding: 24,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(249,163,31,0.28)",
+  },
+  modalIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(249,163,31,0.14)",
+    borderWidth: 1,
+    borderColor: "rgba(249,163,31,0.4)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 14,
+  },
+  modalTitle: { color: "#fff", fontSize: 20, fontWeight: "800" },
+  modalSub: {
+    color: "#8E8E93",
+    fontSize: 14,
+    textAlign: "center",
+    marginTop: 6,
+  },
+  modalBtns: { flexDirection: "row", gap: 10, marginTop: 22 },
+  btn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 16,
+    alignItems: "center",
+  },
+  btnCancel: {
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+  },
+  btnCancelText: { color: "#fff", fontWeight: "700", fontSize: 14.5 },
+  btnYes: { backgroundColor: C.orange },
+  btnYesText: { color: C.dark, fontWeight: "800", fontSize: 14.5 },
 });
