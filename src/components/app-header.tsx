@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { NotificationBell } from "@/components/notification-bell";
 import { NotificationsPanel } from "@/components/notifications-panel";
+import { ProfileSheet } from "@/components/profile-sheet";
 import { FIELDS, getField } from "@/constants/fields";
 import { C } from "@/constants/theme";
 import type { Profile } from "@/hooks/useProfile";
@@ -83,6 +84,7 @@ export function AppHeader({
   const router = useRouter();
   const [now, setNow] = useState(new Date());
   const [notifOpen, setNotifOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const { list: notifs, unread } = useNotifications(items);
 
   // remember the latest real profile, fall back to it while a new screen loads
@@ -197,7 +199,14 @@ export function AppHeader({
         <View style={s.right}>
           <NotificationBell count={unread} onPress={() => setNotifOpen(true)} />
 
-          <View style={s.ring}>
+          <Pressable
+            onPress={() => setProfileOpen(true)}
+            hitSlop={8}
+            style={({ pressed }) => [
+              s.ring,
+              pressed && { opacity: 0.8, transform: [{ scale: 0.95 }] },
+            ]}
+          >
             {profile?.photo ? (
               <Image source={{ uri: profile.photo }} style={s.avatar} />
             ) : (
@@ -207,7 +216,7 @@ export function AppHeader({
                 </Text>
               </View>
             )}
-          </View>
+          </Pressable>
         </View>
       </View>
 
@@ -260,6 +269,15 @@ export function AppHeader({
         visible={notifOpen}
         onClose={() => setNotifOpen(false)}
         notifications={notifs}
+      />
+
+      <ProfileSheet
+        visible={profileOpen}
+        onClose={() => setProfileOpen(false)}
+        profile={profile}
+        onSignOut={() => {
+          // yahan apna sign out logic + clearHeaderProfile()
+        }}
       />
     </View>
   );
